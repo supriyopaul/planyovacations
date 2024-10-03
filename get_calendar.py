@@ -1,13 +1,29 @@
+from datetime import datetime
 import requests
-import json
 import calendar
-from datetime import datetime, timedelta
 from colorama import init, Fore, Back, Style
 
 # Initialize colorama
 init(autoreset=True)
 
-API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&holiday_country=india'
+API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-01-01'
+API_HOLIDAYS_URL = 'http://127.0.0.1:8000/calendar/holidays'
+API_PLANNED_LEAVE_URL = 'http://127.0.0.1:8000/calendar/leave'
+
+holidays_list = [
+    {"date": "2024-01-01", "public_holiday_name": "New Year"},
+    {"date": "2024-01-15", "public_holiday_name": "Makara Sankranti"},
+    {"date": "2024-01-26", "public_holiday_name": "Republic Day"},
+    {"date": "2024-03-29", "public_holiday_name": "Good Friday"},
+    {"date": "2024-04-11", "public_holiday_name": "Ramzan"},
+    {"date": "2024-05-01", "public_holiday_name": "May Day"},
+    {"date": "2024-08-15", "public_holiday_name": "Independence Day"},
+    {"date": "2024-10-02", "public_holiday_name": "Gandhi Jayanti"},
+    {"date": "2024-10-11", "public_holiday_name": "Ayudh Puja/Mahanavami"},
+    {"date": "2024-10-31", "public_holiday_name": "Naraka Chaturdasi"},
+    {"date": "2024-11-01", "public_holiday_name": "Kannada Rajyotsava"},
+    {"date": "2024-12-25", "public_holiday_name": "Christmas"}
+]
 
 try:
     response = requests.get(API_URL)
@@ -15,6 +31,33 @@ try:
     calendar_data = response.json()
 except requests.exceptions.RequestException as e:
     print(f"Error fetching data from API: {e}")
+    exit(1)
+
+try:
+    holidays_response = requests.post(API_HOLIDAYS_URL, json={
+        "calendar": calendar_data,  # Assuming calendar_data is the existing calendar fetched earlier
+        "holidays": holidays_list
+    })
+    holidays_response.raise_for_status()
+    print("Holidays added successfully!")
+    calendar_data = holidays_response.json()
+except requests.exceptions.RequestException as e:
+    print(f"Error adding holidays to the calendar: {e}")
+
+planned_leave_data = {
+    "calendar": calendar_data,  # Updated calendar with holidays
+    "from_date": "2024-11-25",  # Ensure these dates are properly formatted as ISO strings
+    "to_date": "2024-12-29",
+    "leave_reason": "Vacation"
+}
+
+try:
+    planned_leave_response = requests.post(API_PLANNED_LEAVE_URL, json=planned_leave_data)
+    planned_leave_response.raise_for_status()
+    print("Planned leave added successfully!")
+    calendar_data = planned_leave_response.json()
+except requests.exceptions.RequestException as e:
+    print(f"Error adding planned leave to the calendar: {e}")
     exit(1)
 
 # Create a dictionary with dates as keys and properties as values
