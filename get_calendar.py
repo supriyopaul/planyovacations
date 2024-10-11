@@ -6,7 +6,8 @@ from colorama import init, Fore, Back, Style
 # Initialize colorama
 init(autoreset=True)
 
-API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-01-01'
+################################################### Prepare calendar
+API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-02-01'
 API_HOLIDAYS_URL = 'http://127.0.0.1:8000/calendar/holidays'
 API_PLANNED_LEAVE_URL = 'http://127.0.0.1:8000/calendar/leave'
 
@@ -22,7 +23,10 @@ holidays_list = [
     {"date": "2024-10-11", "public_holiday_name": "Ayudh Puja/Mahanavami"},
     {"date": "2024-10-31", "public_holiday_name": "Naraka Chaturdasi"},
     {"date": "2024-11-01", "public_holiday_name": "Kannada Rajyotsava"},
-    {"date": "2024-12-25", "public_holiday_name": "Christmas"}
+    {"date": "2024-12-25", "public_holiday_name": "Christmas"},
+    {"date": "2025-01-01", "public_holiday_name": "New Year"},
+    {"date": "2025-01-15", "public_holiday_name": "Makara Sankranti"},
+    {"date": "2025-01-26", "public_holiday_name": "Republic Day"}
 ]
 
 try:
@@ -47,7 +51,7 @@ except requests.exceptions.RequestException as e:
 planned_leave_data = {
     "calendar": calendar_data,  # Updated calendar with holidays
     "from_date": "2024-11-25",  # Ensure these dates are properly formatted as ISO strings
-    "to_date": "2024-12-29",
+    "to_date": "2024-12-08",
     "leave_reason": "Vacation"
 }
 
@@ -60,6 +64,37 @@ except requests.exceptions.RequestException as e:
     print(f"Error adding planned leave to the calendar: {e}")
     exit(1)
 
+# December 2024 as Preferred Leave Period
+december_preferred = {
+    "calendar": calendar_data,
+    "from_date": "2024-12-01",
+    "to_date": "2024-12-31",
+    "leave_reason": "Preferred leave period for December 2024"
+}
+
+# January 2025 as Preferred Leave Period
+january_preferred = {
+    "calendar": calendar_data,
+    "from_date": "2025-01-01",
+    "to_date": "2025-01-31",
+    "leave_reason": "Preferred leave period for January 2025"
+}
+
+try:
+    # Mark December 2024 as preferred
+    response_december = requests.post(API_PREFERRED_URL, json=december_preferred)
+    response_december.raise_for_status()
+    print("December 2024 marked as preferred leave period.")
+
+    # Mark January 2025 as preferred
+    response_january = requests.post(API_PREFERRED_URL, json=january_preferred)
+    response_january.raise_for_status()
+    print("January 2025 marked as preferred leave period.")
+
+except requests.exceptions.RequestException as e:
+    print(f"Error: {e}")
+
+######################################################################## Visualize calendar
 # Create a dictionary with dates as keys and properties as values
 date_properties = {}
 for day in calendar_data:
@@ -68,16 +103,16 @@ for day in calendar_data:
 
 # Define colors for different day properties
 colors = {
-    'is_weekend': Back.YELLOW + Fore.BLACK,          # Weekend
-    'is_public_holiday': Back.RED + Fore.WHITE,      # Public Holiday
-    'is_planned_leave': Back.GREEN + Fore.BLACK,     # Planned Leave
-    'is_half_day_leave': Back.CYAN + Fore.BLACK,     # Half-Day Leave
-    'is_preferred_period': Back.BLUE + Fore.WHITE,   # Preferred Period
-    'is_unpreferred_period': Back.MAGENTA + Fore.WHITE, # Unpreferred Period
-    'is_suggested_leave': Back.WHITE + Fore.BLACK,   # Suggested Leave
-    'is_locked_leave': Back.BLACK + Fore.WHITE,      # Locked Leave
-    'is_rejected_suggestion': Back.LIGHTRED_EX + Fore.BLACK, # Rejected Suggestion
-    'is_suggested_holiday': Back.LIGHTGREEN_EX + Fore.BLACK, # Public Suggested Holiday
+    'is_weekend': Back.LIGHTYELLOW_EX + Fore.BLACK,          # Weekend - Softer yellow
+    'is_public_holiday': Back.LIGHTRED_EX + Fore.WHITE,      # Public Holiday - Light red for better contrast
+    'is_planned_leave': Back.LIGHTGREEN_EX + Fore.BLACK,     # Planned Leave - Light green for planned leave
+    'is_half_day_leave': Back.LIGHTCYAN_EX + Fore.BLACK,     # Half-Day Leave - Light cyan
+    'is_preferred_leave_period': Back.LIGHTBLUE_EX + Fore.BLACK,   # Preferred Period - Lighter blue for better readability
+    'is_unpreferred_leave_period': Back.LIGHTMAGENTA_EX + Fore.BLACK, # Unpreferred Period - Light magenta
+    'is_suggested_leave': Back.LIGHTWHITE_EX + Fore.BLACK,   # Suggested Leave - Soft white for suggestion
+    'is_locked_leave': Back.BLUE + Fore.WHITE,               # Locked Leave - Use BLUE instead of DARKBLUE
+    'is_rejected_suggestion': Back.RED + Fore.WHITE,         # Rejected Suggestion - Red for rejection
+    'is_suggested_holiday': Back.LIGHTGREEN_EX + Fore.BLACK, # Public Suggested Holiday - Same as planned leave
 }
 
 # Determine the start date from the data

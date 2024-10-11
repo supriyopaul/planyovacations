@@ -12,13 +12,22 @@ class Day(BaseModel):
     public_holiday_name: str = ""
     is_planned_leave: bool = False
     is_half_day_leave: bool = False
-    is_preferred_period: bool = False
-    is_unpreferred_period: bool = False
-    is_suggested_leave: bool = False
+    is_preferred_leave_period: bool = False
+    is_unpreferred_leave_period: bool = False
     is_locked_leave: bool = False
     is_rejected_suggestion: bool = False
     leave_reason: str = ""
     is_suggested_holiday: bool = False
+
+class PublicHolidayRequest(BaseModel):
+    date: date
+    public_holiday_name: Optional[str] = None
+
+class PlannedLeaveRequest(BaseModel):
+    calendar: List[Day]
+    from_date: date
+    to_date: date
+    leave_reason: str = ""
 '''
 
 app = FastAPI()
@@ -119,5 +128,44 @@ def add_planned_leave(request: PlannedLeaveRequest):
             if not day.is_weekend and not day.is_public_holiday:
                 day.is_planned_leave = True
                 day.leave_reason = request.leave_reason  # Add the optional leave reason if provided
+    
+    return request.calendar
+
+@app.delete("/calendar/leave")
+def remove_planned_leave(request: PlannedLeaveRequest):
+    # Validate that from_date is before or the same as to_date
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+    
+    # Loop through the range of dates and remove the planned leave
+    for day in request.calendar:
+        if request.from_date <= day.date <= request.to_date:
+            if day.is_planned_leave:
+                day.is_planned_leave = False
+                day.leave_reason = ""
+    
+    return request.calendar
+
+@app.post("/calendar/preferred")
+def add_preferred_leave_period(request: PlannedLeaveRequest):
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+
+    for day in request.calendar:
+        if request.from_date <= day.date <= request.to_date:
+            if not day.is_public_holiday and not day.is_weekend:
+                day.is_preferred_leave_period = True
+    
+    return request.calendar
+
+@app.post("/calendar/unpreferred")
+def add_unpreferred_leave_period(request: PlannedLeaveRequest):
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+
+    for day in request.calendar:
+        if request.from_date <= day.date <= request.to_date:
+            if not day.is_public_holiday and not day.is_weekend:
+                day.is_unpreferred_leave_period = True
     
     return request.calendar
