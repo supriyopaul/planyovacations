@@ -1,39 +1,24 @@
 from fastapi import FastAPI, HTTPException
 from datetime import date, timedelta
-from models import Day, PublicHolidayRequest, PlannedLeaveRequest
+from models import (
+    Day,
+    Calendar,
+    PlannedLeaveRequest,
+    CountryHolidayRequest,
+    AddPublicHolidaysRequest,
+    DeletePublicHolidayRequest,
+    PublicHolidayRequest,
+)
 import holidays
-from typing import List
-
-'''
-class Day(BaseModel):
-    date: date
-    is_weekend: bool = False
-    is_public_holiday: bool = False
-    public_holiday_name: str = ""
-    is_planned_leave: bool = False
-    is_half_day_leave: bool = False
-    is_preferred_leave_period: bool = False
-    is_unpreferred_leave_period: bool = False
-    is_locked_leave: bool = False
-    is_rejected_suggestion: bool = False
-    leave_reason: str = ""
-    is_suggested_holiday: bool = False
-
-class PublicHolidayRequest(BaseModel):
-    date: date
-    public_holiday_name: Optional[str] = None
-
-class PlannedLeaveRequest(BaseModel):
-    calendar: List[Day]
-    from_date: date
-    to_date: date
-    leave_reason: str = ""
-'''
 
 app = FastAPI()
 
 @app.get("/calendar")
-def get_calendar(start_date: date = None, work_week: int = 5):
+def get_calendar(
+    start_date: date = None,
+    work_week: int = 5,
+    leave_balance: int = 20
+):
     if start_date is None:
         start_date = date.today()
     days = []
@@ -57,12 +42,15 @@ def get_calendar(start_date: date = None, work_week: int = 5):
         
         days.append(day)
 
-    return days
+    calendar = Calendar(leave_balance=leave_balance, days=days)
+    return calendar
 
 @app.post("/calendar/holiday/country")
-def add_public_holidays_by_country(calendar: List[Day], holiday_country: str):
+def add_public_holidays_by_country(request: CountryHolidayRequest):
+    calendar = request.calendar
+    holiday_country = request.holiday_country
+
     # Map country name to country code
-    country_code = holiday_country.upper()
     country_name_to_code = {
         'INDIA': 'IN',
         'UNITED STATES': 'US',
@@ -72,7 +60,10 @@ def add_public_holidays_by_country(calendar: List[Day], holiday_country: str):
         'CANADA': 'CA',
         # Add more mappings as needed
     }
-    country_code = country_name_to_code.get(country_code, country_code)
+    country_code = country_name_to_code.get(holiday_country.upper())
+
+    if not country_code:
+        raise HTTPException(status_code=400, detail="Country not supported")
 
     # Determine country holidays
     try:
@@ -81,7 +72,7 @@ def add_public_holidays_by_country(calendar: List[Day], holiday_country: str):
         raise HTTPException(status_code=400, detail="Country not supported")
     
     # Add public holidays to the calendar
-    for day in calendar:
+    for day in calendar.days:
         if day.date in country_holidays:
             day.is_public_holiday = True
             day.public_holiday_name = country_holidays.get(day.date)
@@ -89,21 +80,28 @@ def add_public_holidays_by_country(calendar: List[Day], holiday_country: str):
     return calendar
 
 @app.post("/calendar/holidays")
-def add_public_holiday(calendar: List[Day], holidays: List[PublicHolidayRequest]):
+def add_public_holiday(request: AddPublicHolidaysRequest):
+    calendar = request.calendar
+    holidays_list = request.holidays
+
     # Find the day in the calendar matching the input holiday date
-    for day in calendar:
-        for holiday in holidays:
+    for holiday in holidays_list:
+        for day in calendar.days:
             if day.date == holiday.date:
                 # Update the day with public holiday information
                 day.is_public_holiday = True
                 day.public_holiday_name = holiday.public_holiday_name or "Unnamed Holiday"
+                break
 
     return calendar
     
-@app.delete("/calendar/holiday/{holiday_date}")
-def delete_public_holiday(calendar: List[Day], holiday_date: date):
+@app.delete("/calendar/holiday")
+def delete_public_holiday(request: DeletePublicHolidayRequest):
+    calendar = request.calendar
+    holiday_date = request.holiday_date
+
     # Find the day in the calendar matching the holiday date
-    for day in calendar:
+    for day in calendar.days:
         if day.date == holiday_date:
             # Reset the holiday information
             if day.is_public_holiday:
@@ -117,55 +115,81 @@ def delete_public_holiday(calendar: List[Day], holiday_date: date):
 
 @app.post("/calendar/leave")
 def add_planned_leave(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
     # Validate that from_date is before or the same as to_date
     if request.from_date > request.to_date:
         raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
-    
-    # Loop through the range of dates
-    for day in request.calendar:
+
+    # Calculate the number of leave days requested
+    leave_days_requested = 0
+
+    for day in calendar.days:
         if request.from_date <= day.date <= request.to_date:
             # Skip weekends and public holidays
             if not day.is_weekend and not day.is_public_holiday:
+                if not day.is_planned_leave:
+                    leave_days_requested += 1
                 day.is_planned_leave = True
                 day.leave_reason = request.leave_reason  # Add the optional leave reason if provided
-    
-    return request.calendar
+
+    # Check if leave balance is sufficient
+    if leave_days_requested > calendar.leave_balance:
+        raise HTTPException(status_code=400, detail="Insufficient leave balance")
+
+    # Deduct the leave days from the balance
+    calendar.leave_balance -= leave_days_requested
+
+    return calendar
 
 @app.delete("/calendar/leave")
 def remove_planned_leave(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
     # Validate that from_date is before or the same as to_date
     if request.from_date > request.to_date:
         raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
-    
+
+    # Count the number of leave days being removed
+    leave_days_removed = 0
+
     # Loop through the range of dates and remove the planned leave
-    for day in request.calendar:
+    for day in calendar.days:
         if request.from_date <= day.date <= request.to_date:
             if day.is_planned_leave:
                 day.is_planned_leave = False
                 day.leave_reason = ""
-    
-    return request.calendar
+                leave_days_removed += 1
+
+    # Add the leave days back to the balance
+    calendar.leave_balance += leave_days_removed
+
+    return calendar
 
 @app.post("/calendar/preferred")
 def add_preferred_leave_period(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
     if request.from_date > request.to_date:
         raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
 
-    for day in request.calendar:
+    for day in calendar.days:
         if request.from_date <= day.date <= request.to_date:
             if not day.is_public_holiday and not day.is_weekend:
                 day.is_preferred_leave_period = True
-    
-    return request.calendar
+
+    return calendar
 
 @app.post("/calendar/unpreferred")
 def add_unpreferred_leave_period(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
     if request.from_date > request.to_date:
         raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
 
-    for day in request.calendar:
+    for day in calendar.days:
         if request.from_date <= day.date <= request.to_date:
             if not day.is_public_holiday and not day.is_weekend:
                 day.is_unpreferred_leave_period = True
-    
-    return request.calendar
+
+    return calendar

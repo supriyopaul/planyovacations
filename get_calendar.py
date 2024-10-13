@@ -7,9 +7,12 @@ from colorama import init, Fore, Back, Style
 init(autoreset=True)
 
 ################################################### Prepare calendar
-API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-02-01'
+
+# Updated API URL to include leave_balance parameter
+API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-02-01&leave_balance=18'
 API_HOLIDAYS_URL = 'http://127.0.0.1:8000/calendar/holidays'
 API_PLANNED_LEAVE_URL = 'http://127.0.0.1:8000/calendar/leave'
+API_PREFERRED_URL = 'http://127.0.0.1:8000/calendar/preferred'
 
 holidays_list = [
     {"date": "2024-01-01", "public_holiday_name": "New Year"},
@@ -29,17 +32,20 @@ holidays_list = [
     {"date": "2025-01-26", "public_holiday_name": "Republic Day"}
 ]
 
+# Step 1: Fetch the initial calendar
 try:
     response = requests.get(API_URL)
     response.raise_for_status()
     calendar_data = response.json()
+    print(f"Initial Leave Balance: {calendar_data['leave_balance']}")
 except requests.exceptions.RequestException as e:
     print(f"Error fetching data from API: {e}")
     exit(1)
 
+# Step 2: Add public holidays to the calendar
 try:
     holidays_response = requests.post(API_HOLIDAYS_URL, json={
-        "calendar": calendar_data,  # Assuming calendar_data is the existing calendar fetched earlier
+        "calendar": calendar_data,
         "holidays": holidays_list
     })
     holidays_response.raise_for_status()
@@ -47,10 +53,12 @@ try:
     calendar_data = holidays_response.json()
 except requests.exceptions.RequestException as e:
     print(f"Error adding holidays to the calendar: {e}")
+    exit(1)
 
+# Step 3: Add planned leave to the calendar
 planned_leave_data = {
-    "calendar": calendar_data,  # Updated calendar with holidays
-    "from_date": "2024-11-25",  # Ensure these dates are properly formatted as ISO strings
+    "calendar": calendar_data,
+    "from_date": "2024-11-25",
     "to_date": "2024-12-08",
     "leave_reason": "Vacation"
 }
@@ -60,11 +68,12 @@ try:
     planned_leave_response.raise_for_status()
     print("Planned leave added successfully!")
     calendar_data = planned_leave_response.json()
+    print(f"Remaining Leave Balance after planned leave: {calendar_data['leave_balance']}")
 except requests.exceptions.RequestException as e:
     print(f"Error adding planned leave to the calendar: {e}")
     exit(1)
 
-# December 2024 as Preferred Leave Period
+# Step 4: Mark December 2024 as a preferred leave period
 december_preferred = {
     "calendar": calendar_data,
     "from_date": "2024-12-01",
@@ -72,7 +81,16 @@ december_preferred = {
     "leave_reason": "Preferred leave period for December 2024"
 }
 
-# January 2025 as Preferred Leave Period
+try:
+    response_december = requests.post(API_PREFERRED_URL, json=december_preferred)
+    response_december.raise_for_status()
+    print("December 2024 marked as preferred leave period.")
+    calendar_data = response_december.json()
+except requests.exceptions.RequestException as e:
+    print(f"Error: {e}")
+    exit(1)
+
+# Step 5: Mark January 2025 as a preferred leave period
 january_preferred = {
     "calendar": calendar_data,
     "from_date": "2025-01-01",
@@ -81,42 +99,34 @@ january_preferred = {
 }
 
 try:
-    # Mark December 2024 as preferred
-    response_december = requests.post(API_PREFERRED_URL, json=december_preferred)
-    response_december.raise_for_status()
-    print("December 2024 marked as preferred leave period.")
-
-    # Mark January 2025 as preferred
     response_january = requests.post(API_PREFERRED_URL, json=january_preferred)
     response_january.raise_for_status()
     print("January 2025 marked as preferred leave period.")
-
+    calendar_data = response_january.json()
 except requests.exceptions.RequestException as e:
     print(f"Error: {e}")
+    exit(1)
 
 ######################################################################## Visualize calendar
-# Create a dictionary with dates as keys and properties as values
+
+# Update: Access the 'days' list within the calendar_data
 date_properties = {}
-for day in calendar_data:
+for day in calendar_data['days']:
     date_str = day['date']
     date_properties[date_str] = day
 
 # Define colors for different day properties
 colors = {
-    'is_weekend': Back.LIGHTYELLOW_EX + Fore.BLACK,          # Weekend - Softer yellow
-    'is_public_holiday': Back.LIGHTRED_EX + Fore.WHITE,      # Public Holiday - Light red for better contrast
-    'is_planned_leave': Back.LIGHTGREEN_EX + Fore.BLACK,     # Planned Leave - Light green for planned leave
-    'is_half_day_leave': Back.LIGHTCYAN_EX + Fore.BLACK,     # Half-Day Leave - Light cyan
-    'is_preferred_leave_period': Back.LIGHTBLUE_EX + Fore.BLACK,   # Preferred Period - Lighter blue for better readability
-    'is_unpreferred_leave_period': Back.LIGHTMAGENTA_EX + Fore.BLACK, # Unpreferred Period - Light magenta
-    'is_suggested_leave': Back.LIGHTWHITE_EX + Fore.BLACK,   # Suggested Leave - Soft white for suggestion
-    'is_locked_leave': Back.BLUE + Fore.WHITE,               # Locked Leave - Use BLUE instead of DARKBLUE
-    'is_rejected_suggestion': Back.RED + Fore.WHITE,         # Rejected Suggestion - Red for rejection
-    'is_suggested_holiday': Back.LIGHTGREEN_EX + Fore.BLACK, # Public Suggested Holiday - Same as planned leave
+    'is_weekend': Back.LIGHTYELLOW_EX + Fore.BLACK,          # Weekend
+    'is_public_holiday': Back.LIGHTRED_EX + Fore.WHITE,      # Public Holiday
+    'is_planned_leave': Back.LIGHTGREEN_EX + Fore.BLACK,     # Planned Leave
+    'is_preferred_leave_period': Back.LIGHTBLUE_EX + Fore.BLACK,   # Preferred Period
+    'is_unpreferred_leave_period': Back.LIGHTMAGENTA_EX + Fore.BLACK, # Unpreferred Period
+    'is_recommended_leave': Back.LIGHTGREEN_EX + Fore.BLACK, # Suggested Holiday
 }
 
 # Determine the start date from the data
-start_date = datetime.strptime(calendar_data[0]['date'], '%Y-%m-%d')
+start_date = datetime.strptime(calendar_data['days'][0]['date'], '%Y-%m-%d')
 start_year = start_date.year
 start_month = start_date.month
 
@@ -167,3 +177,6 @@ for prop, color in colors.items():
     # Remove underscores and capitalize words for readability
     prop_readable = prop.replace('_', ' ').title()
     print(f"{color}  {Style.RESET_ALL} - {prop_readable}")
+
+# Print the final leave balance
+print(f"\nFinal Leave Balance: {calendar_data['leave_balance']}")
