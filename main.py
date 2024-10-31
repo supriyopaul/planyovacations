@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException
 from datetime import date, timedelta
+
+from pydantic import ValidationError
+from fastapi import FastAPI, HTTPException
 from models import (
     Day,
     Calendar,
@@ -7,9 +9,11 @@ from models import (
     CountryHolidayRequest,
     AddPublicHolidaysRequest,
     DeletePublicHolidayRequest,
-    PublicHolidayRequest,
 )
 import holidays
+
+EXTENDED_LEAVE_REASON = "Extended Leave"
+CALENDAR_RANGE = 365
 
 app = FastAPI()
 
@@ -23,12 +27,16 @@ def get_calendar(
         start_date = date.today()
     days = []
     
-    for i in range(365):
+    for i in range(CALENDAR_RANGE):
         current_date = start_date + timedelta(days=i)
         day = Day(date=current_date)
         
         # Determine if weekend
-        if work_week == 5:
+        if work_week == 4:
+            # Weekends are Friday, Saturday and Sunday
+            if current_date.weekday() >= 4:  # 4 = Friday, 5 = Saturday, 6 = Sunday
+                day.is_weekend = True
+        elif work_week == 5:
             # Weekends are Saturday and Sunday
             if current_date.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
                 day.is_weekend = True
@@ -233,9 +241,9 @@ def recommend_leaves(request: Calendar):
 
     return calendar
 
-# Helper Functions
 def is_non_working_day(day):
-    return day.is_weekend or day.is_public_holiday or day.is_planned_leave
+    return (day.is_weekend or day.is_public_holiday or day.is_planned_leave or
+            day.is_unpreferred_leave_period)
 
 def is_workday(day):
     return not is_non_working_day(day)
@@ -273,13 +281,13 @@ def calculate_upp(candidate, calendar):
         return 1.0  # Not within unpreferred period
 
 def calculate_df(candidate, calendar):
-    # For simplicity, let's say we add 0.1 if the candidate is not close to other planned or suggested leaves
+    # Penalize if the candidate is close to other leaves
     for existing in calendar.days:
         if existing.is_planned_leave or existing.is_recommended_leave:
             days_between = abs((existing.date - candidate['start_date']).days)
             if days_between < 30:
-                return 0  # No bonus if close to existing leaves
-    return 0.1  # Bonus for being spread out
+                return 0.9  # Penalize close leaves
+    return 1.0  # Neutral score if leaves are well-distributed
 
 def find_potential_break(calendar, index):
     # Look ahead and behind to find adjacent non-working days
@@ -311,3 +319,60 @@ def candidate_score(candidate, calendar):
 
 def rank_candidates(candidates):
     candidates.sort(key=lambda x: x['score'], reverse=True)
+
+@app.post("/calendar/lock_recommended_leave")
+def lock_recommended_leave(calendar: Calendar, date_to_lock: date):
+    for day in calendar.days:
+        if day.date == date_to_lock:
+            if day.is_recommended_leave:
+                day.is_planned_leave = True
+                day.leave_reason = EXTENDED_LEAVE_REASON
+                day.is_recommended_leave = False
+                calendar.leave_balance = calendar.leave_balance - 1
+                return calendar
+            else:
+                raise HTTPException(status_code=400, detail="Date is not a suggested leave")
+    raise HTTPException(status_code=404, detail="Date not found in calendar")
+
+@app.post("/calendar/reject_recommended_leave")
+def reject_recommended_leave(calendar: Calendar, date_to_reject: date):
+    for day in calendar.days:
+        if day.date == date_to_reject:
+            if day.is_recommended_leave:
+                day.is_unpreferred_leave_period = True
+                day.is_recommended_leave = False
+                # Trigger a re-computation of suggested leaves
+                return calendar
+            else:
+                raise HTTPException(status_code=400, detail="Date is not a suggested leave")
+    raise HTTPException(status_code=404, detail="Date not found in calendar")
+
+@app.post("/calendar/export/json")
+def export_calendar_json(calendar: Calendar):
+    return calendar.dict()
+
+@app.post("/calendar/export/pdf")
+def export_calendar_pdf(calendar: Calendar):
+    # Implement PDF generation logic here
+    # Return PDF file as response
+    pass
+
+@app.post("/calendar/export/suggested_leaves")
+def export_suggested_leaves(calendar: Calendar):
+    suggested_leaves = [
+        {
+            "date": day.date,
+            "reason": day.leave_reason
+        }
+        for day in calendar.days if day.is_recommended_leave or day.leave_reason == EXTENDED_LEAVE_REASON
+    ]
+    # Return as CSV or JSON
+    return suggested_leaves
+
+@app.post("/calendar/import")
+def import_calendar(calendar_data: dict):
+    try:
+        calendar = Calendar(**calendar_data)
+        return calendar
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
