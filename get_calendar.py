@@ -8,11 +8,11 @@ init(autoreset=True)
 
 ################################################### Prepare calendar
 
-# Updated API URL to include leave_balance parameter
-API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-02-01&leave_balance=18'
+API_URL = 'http://127.0.0.1:8000/calendar?work_week=5&start_date=2024-10-01&leave_balance=18'
 API_HOLIDAYS_URL = 'http://127.0.0.1:8000/calendar/holidays'
 API_PLANNED_LEAVE_URL = 'http://127.0.0.1:8000/calendar/leave'
 API_PREFERRED_URL = 'http://127.0.0.1:8000/calendar/preferred'
+API_RECOMMEND_LEAVES_URL = 'http://127.0.0.1:8000/calendar/recommend_leaves'
 
 holidays_list = [
     {"date": "2024-01-01", "public_holiday_name": "New Year"},
@@ -107,6 +107,16 @@ except requests.exceptions.RequestException as e:
     print(f"Error: {e}")
     exit(1)
 
+try:
+    recommend_leaves_response = requests.post(API_RECOMMEND_LEAVES_URL, json=calendar_data)
+    recommend_leaves_response.raise_for_status()
+    print("Recommended leaves added to the calendar.")
+    calendar_data = recommend_leaves_response.json()
+    print(f"Remaining Leave Balance after recommendations: {calendar_data['leave_balance']}")
+except requests.exceptions.RequestException as e:
+    print(f"Error getting recommended leaves: {e}")
+    exit(1)
+
 ######################################################################## Visualize calendar
 
 # Update: Access the 'days' list within the calendar_data
@@ -117,12 +127,13 @@ for day in calendar_data['days']:
 
 # Define colors for different day properties
 colors = {
-    'is_weekend': Back.LIGHTYELLOW_EX + Fore.BLACK,          # Weekend
-    'is_public_holiday': Back.LIGHTRED_EX + Fore.WHITE,      # Public Holiday
     'is_planned_leave': Back.LIGHTGREEN_EX + Fore.BLACK,     # Planned Leave
+    'is_recommended_leave': Back.LIGHTCYAN_EX + Fore.BLACK,  # Recommended Leave
+    'is_public_holiday': Back.LIGHTRED_EX + Fore.WHITE,      # Public Holiday
     'is_preferred_leave_period': Back.LIGHTBLUE_EX + Fore.BLACK,   # Preferred Period
     'is_unpreferred_leave_period': Back.LIGHTMAGENTA_EX + Fore.BLACK, # Unpreferred Period
-    'is_recommended_leave': Back.LIGHTGREEN_EX + Fore.BLACK, # Suggested Holiday
+    'is_weekend': Back.LIGHTYELLOW_EX + Fore.BLACK,          # Weekend
+    # Other properties can be added here if needed
 }
 
 # Determine the start date from the data

@@ -193,3 +193,121 @@ def add_unpreferred_leave_period(request: PlannedLeaveRequest):
                 day.is_unpreferred_leave_period = True
 
     return calendar
+
+@app.post("/calendar/recommend_leaves")
+def recommend_leaves(request: Calendar):
+    calendar = request
+    candidates = []
+    remaining_leave_balance = calendar.leave_balance  # Initialize remaining leave balance
+
+    # Identify potential breaks
+    for i in range(len(calendar.days)):
+        day = calendar.days[i]
+        if day.is_weekend or day.is_public_holiday or day.is_planned_leave:
+            continue  # Skip non-working days
+        # Check for potential breaks
+        potential_break = find_potential_break(calendar, i)
+        if potential_break:
+            candidates.append(potential_break)
+    
+    # Calculate scores for candidates
+    for candidate in candidates:
+        candidate['score'] = candidate_score(candidate, calendar)
+    
+    # Rank candidates
+    rank_candidates(candidates)
+    
+    # Select candidates within leave balance
+    for candidate in candidates:
+        LD = candidate['leave_days_required']
+        if LD <= remaining_leave_balance:
+            # Mark suggested leaves
+            for idx in candidate['leave_day_indices']:
+                calendar.days[idx].is_recommended_leave = True
+            remaining_leave_balance -= LD
+        else:
+            continue  # Skip if insufficient leave balance
+
+    # Update the leave balance in the calendar
+    calendar.leave_balance = remaining_leave_balance
+
+    return calendar
+
+# Helper Functions
+def is_non_working_day(day):
+    return day.is_weekend or day.is_public_holiday or day.is_planned_leave
+
+def is_workday(day):
+    return not is_non_working_day(day)
+
+def count_workdays(days):
+    return sum(1 for day in days if is_workday(day))
+
+def calculate_break_length(candidate):
+    return (candidate['end_date'] - candidate['start_date']).days + 1
+
+def calculate_ppf(candidate, calendar):
+    preferred_days = 0
+    for idx in candidate['leave_day_indices']:
+        if calendar.days[idx].is_preferred_leave_period:
+            preferred_days += 1
+    LD = candidate['leave_days_required']
+    if preferred_days == LD:
+        return 1.2  # Entirely within preferred period
+    elif preferred_days > 0:
+        return 1.1  # Partially within preferred period
+    else:
+        return 1.0  # Not within preferred period
+    
+def calculate_upp(candidate, calendar):
+    unpreferred_days = 0
+    for idx in candidate['leave_day_indices']:
+        if calendar.days[idx].is_unpreferred_leave_period:
+            unpreferred_days += 1
+    LD = candidate['leave_days_required']
+    if unpreferred_days == LD:
+        return 0.8  # Entirely within unpreferred period
+    elif unpreferred_days > 0:
+        return 0.9  # Partially within unpreferred period
+    else:
+        return 1.0  # Not within unpreferred period
+
+def calculate_df(candidate, calendar):
+    # For simplicity, let's say we add 0.1 if the candidate is not close to other planned or suggested leaves
+    for existing in calendar.days:
+        if existing.is_planned_leave or existing.is_recommended_leave:
+            days_between = abs((existing.date - candidate['start_date']).days)
+            if days_between < 30:
+                return 0  # No bonus if close to existing leaves
+    return 0.1  # Bonus for being spread out
+
+def find_potential_break(calendar, index):
+    # Look ahead and behind to find adjacent non-working days
+    start_index = index
+    end_index = index
+    while start_index > 0 and is_non_working_day(calendar.days[start_index - 1]):
+        start_index -= 1
+    while end_index < len(calendar.days) - 1 and is_non_working_day(calendar.days[end_index + 1]):
+        end_index += 1
+    # Identify required leave days within this range
+    leave_days_required = count_workdays(calendar.days[start_index:end_index + 1])
+    if leave_days_required == 0:
+        return None
+    break_length = (calendar.days[end_index].date - calendar.days[start_index].date).days + 1
+    return {
+        'start_date': calendar.days[start_index].date,
+        'end_date': calendar.days[end_index].date,
+        'leave_days_required': leave_days_required,
+        'leave_day_indices': [i for i in range(start_index, end_index + 1) if is_workday(calendar.days[i])],
+    }
+
+def candidate_score(candidate, calendar):
+    BL = calculate_break_length(candidate)
+    LD = candidate['leave_days_required']
+    PPF = calculate_ppf(candidate, calendar)
+    UPP = calculate_upp(candidate, calendar)
+    DF = calculate_df(candidate, calendar)
+    return ((BL / LD) * PPF * UPP) + DF
+
+def rank_candidates(candidates):
+    candidates.sort(key=lambda x: x['score'], reverse=True)
