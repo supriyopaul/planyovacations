@@ -1,8 +1,10 @@
 from datetime import date, timedelta
-import pycountry
+import holidays
 
+import pycountry
 from pydantic import ValidationError
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from models import (
     Day,
     Calendar,
@@ -11,12 +13,21 @@ from models import (
     AddPublicHolidaysRequest,
     DeletePublicHolidayRequest,
 )
-import holidays
+
+
 
 EXTENDED_LEAVE_REASON = "Extended Leave"
 CALENDAR_RANGE = 365
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # List your frontend origin here
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
 
 @app.get("/calendar")
 def get_calendar(
