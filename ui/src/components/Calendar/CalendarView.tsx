@@ -31,26 +31,31 @@ export function CalendarView({ workWeek, leaveBalance }: CalendarViewProps) {
     const fetchCalendar = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/calendar?` +
+          `http://localhost:8000/calendar?` +
           `work_week=${workWeek}&leave_balance=${leaveBalance}`
         );
+  
         console.log('API Response:', response);
-        
+  
         if (!response.ok) {
-          throw new Error('Failed to fetch calendar data');
+          const errorText = await response.text();
+          console.error('Error response text:', errorText);
+          throw new Error(`Failed to fetch calendar data: ${errorText}`);
         }
-
+  
         const data = await response.json();
+        console.log('Parsed Data:', data);
         setCalendar(data);
       } catch (err) {
+        console.error('Fetch Calendar Error:', err);
         setError('Unable to load calendar. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchCalendar();
-  }, [workWeek, leaveBalance]);
+  }, [workWeek, leaveBalance]);  
 
   if (isLoading) {
     return (
