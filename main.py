@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import pycountry
 
 from pydantic import ValidationError
 from fastapi import FastAPI, HTTPException
@@ -23,6 +24,10 @@ def get_calendar(
     work_week: int = 5,
     leave_balance: int = 20
 ):
+
+    if work_week not in [4, 5, 6]:
+        raise HTTPException(status_code=400, detail="Invalid work week. Choose 4, 5, or 6 days.")
+
     if start_date is None:
         start_date = date.today()
     days = []
@@ -56,19 +61,11 @@ def get_calendar(
 @app.post("/calendar/holiday/country")
 def add_public_holidays_by_country(request: CountryHolidayRequest):
     calendar = request.calendar
-    holiday_country = request.holiday_country
-
-    # Map country name to country code
-    country_name_to_code = {
-        'INDIA': 'IN',
-        'UNITED STATES': 'US',
-        'US': 'US',
-        'UK': 'UK',
-        'UNITED KINGDOM': 'UK',
-        'CANADA': 'CA',
-        # Add more mappings as needed
-    }
-    country_code = country_name_to_code.get(holiday_country.upper())
+    country_input = request.holiday_country.upper()
+    country = pycountry.countries.get(name=country_input) or pycountry.countries.get(alpha_2=country_input)
+    if not country:
+        raise HTTPException(status_code=400, detail="Country not found.")
+    country_code = country.alpha_2
 
     if not country_code:
         raise HTTPException(status_code=400, detail="Country not supported")
@@ -138,6 +135,8 @@ def add_planned_leave(request: PlannedLeaveRequest):
             if not day.is_weekend and not day.is_public_holiday:
                 if not day.is_planned_leave:
                     leave_days_requested += 1
+                if leave_days_requested > calendar.leave_balance:
+                    raise HTTPException(status_code=400, detail="Insufficient leave balance.")
                 day.is_planned_leave = True
                 day.leave_reason = request.leave_reason  # Add the optional leave reason if provided
 
@@ -329,7 +328,8 @@ def lock_recommended_leave(calendar: Calendar, date_to_lock: date):
                 day.leave_reason = EXTENDED_LEAVE_REASON
                 day.is_recommended_leave = False
                 calendar.leave_balance = calendar.leave_balance - 1
-                return calendar
+                updated_calendar = recommend_leaves(calendar)
+                return updated_calendar
             else:
                 raise HTTPException(status_code=400, detail="Date is not a suggested leave")
     raise HTTPException(status_code=404, detail="Date not found in calendar")
@@ -341,8 +341,8 @@ def reject_recommended_leave(calendar: Calendar, date_to_reject: date):
             if day.is_recommended_leave:
                 day.is_unpreferred_leave_period = True
                 day.is_recommended_leave = False
-                # Trigger a re-computation of suggested leaves
-                return calendar
+                updated_calendar = recommend_leaves(calendar)
+                return updated_calendar
             else:
                 raise HTTPException(status_code=400, detail="Date is not a suggested leave")
     raise HTTPException(status_code=404, detail="Date not found in calendar")
