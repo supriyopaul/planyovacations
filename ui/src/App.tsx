@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import PlannerForm from './components/PlannerForm';
 import YearlyCalendar from './components/YearlyCalendar';
-import { fetchCalendarData, markHoliday, planLeave } from './utils/api';
+import {
+  fetchCalendarData,
+  addPublicHolidaysByCountry,
+  markHoliday,
+  planLeave,
+} from './utils/api';
 import type { CalendarResponse } from './types';
 
 function App() {
@@ -10,11 +15,14 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (workWeek: number, startDate: string, leaveBalance: number) => {
+  const handleSubmit = async (workWeek: number, startDate: string, leaveBalance: number, country: string) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchCalendarData(workWeek, startDate, leaveBalance);
+      let data = await fetchCalendarData(workWeek, startDate, leaveBalance);
+      if (country) {
+        data = await addPublicHolidaysByCountry(data, country);
+      }
       setCalendarData(data);
     } catch (err) {
       setError('Unable to fetch calendar data. Please try again later.');

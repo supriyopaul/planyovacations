@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getSupportedCountries } from '../utils/api'; // Import the API function
 
 interface PlannerFormProps {
-  onSubmit: (workWeek: number, startDate: string, leaveBalance: number) => void;
+  onSubmit: (workWeek: number, startDate: string, leaveBalance: number, country: string) => void;
   loading: boolean;
 }
 
@@ -10,15 +11,29 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading }) => {
   const [workWeek, setWorkWeek] = useState(5);
   const [startDate, setStartDate] = useState(today);
   const [leaveBalance, setLeaveBalance] = useState(18);
+  const [countries, setCountries] = useState<{ name: string; code: string }[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState('');
+
+  useEffect(() => {
+    // Fetch supported countries when the component mounts
+    getSupportedCountries()
+      .then((data) => {
+        const initialOption = { name: 'Do not load public holidays', code: '' };
+        setCountries([initialOption, ...data]);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch supported countries:', error);
+      });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(workWeek, startDate, leaveBalance);
+    onSubmit(workWeek, startDate, leaveBalance, selectedCountry);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-4 gap-6">
         <div>
           <label htmlFor="workWeek" className="block text-sm font-medium text-gray-700 mb-2">
             Work Days per Week
@@ -28,8 +43,8 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading }) => {
             id="workWeek"
             value={workWeek}
             onChange={(e) => setWorkWeek(Number(e.target.value))}
-            min="1"
-            max="7"
+            min="4"
+            max="6"
             className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
         </div>
@@ -57,6 +72,23 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading }) => {
             min="0"
             className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
+        </div>
+        <div>
+          <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+            Country
+          </label>
+          <select
+            id="country"
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            {countries.map((country, index) => (
+              <option key={index} value={country.code}>
+                {country.name} {country.code ? `(${country.code})` : ''}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div className="flex justify-center">

@@ -107,7 +107,21 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({ days, onDateClick }) =>
           </div>
         </div>
       )}
-
+      <div className="flex flex-wrap gap-4 justify-center">
+        {[
+          { label: 'Weekend', class: 'bg-gray-100' },
+          { label: 'Public Holiday', class: 'bg-purple-100' },
+          { label: 'Planned Leave', class: 'bg-green-100' },
+          { label: 'Recommended', class: 'bg-blue-100' },
+          { label: 'Preferred Period', class: 'bg-yellow-100' },
+          { label: 'Unpreferred Period', class: 'bg-red-100' }
+        ].map((legend) => (
+          <div key={legend.label} className="flex items-center space-x-2">
+            <div className={`h-4 w-4 rounded-full ${legend.class}`}></div>
+            <span className="text-sm text-gray-600">{legend.label}</span>
+          </div>
+        ))}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {Object.entries(groupedDays).map(([monthKey, monthDays]) => {
           const [year, month] = monthKey.split('-');
@@ -154,21 +168,6 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({ days, onDateClick }) =>
         />
       )}
 
-      <div className="flex flex-wrap gap-4 justify-center">
-        {[
-          { label: 'Weekend', class: 'bg-gray-100' },
-          { label: 'Public Holiday', class: 'bg-purple-100' },
-          { label: 'Planned Leave', class: 'bg-green-100' },
-          { label: 'Recommended', class: 'bg-blue-100' },
-          { label: 'Preferred Period', class: 'bg-yellow-100' },
-          { label: 'Unpreferred Period', class: 'bg-red-100' }
-        ].map((legend) => (
-          <div key={legend.label} className="flex items-center space-x-2">
-            <div className={`h-4 w-4 rounded-full ${legend.class}`}></div>
-            <span className="text-sm text-gray-600">{legend.label}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };

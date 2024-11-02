@@ -1,5 +1,7 @@
 from datetime import date, timedelta
+from typing import List
 import holidays
+
 
 import pycountry
 from pydantic import ValidationError
@@ -69,23 +71,55 @@ def get_calendar(
     calendar = Calendar(leave_balance=leave_balance, days=days)
     return calendar
 
+
+@app.get("/countries")
+def get_supported_countries():
+    """
+    Returns a list of supported countries and their codes.
+    """
+    try:
+        # Get the list of supported country codes from the 'holidays' library
+        country_codes = holidays.list_supported_countries()
+        
+        supported_countries = []
+        for code in sorted(country_codes):
+            # Use pycountry to get the country name from the code
+            country = pycountry.countries.get(alpha_2=code)
+            if country:
+                supported_countries.append({'name': country.name, 'code': code})
+            else:
+                # If pycountry doesn't have the country, use the code as the name
+                supported_countries.append({'name': code, 'code': code})
+        return supported_countries
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/calendar/holiday/country")
 def add_public_holidays_by_country(request: CountryHolidayRequest):
     calendar = request.calendar
     country_input = request.holiday_country.upper()
-    country = pycountry.countries.get(name=country_input) or pycountry.countries.get(alpha_2=country_input)
+
+    # Try to get the country code from pycountry
+    country = pycountry.countries.get(name=country_input)
+    if not country:
+        country = pycountry.countries.get(alpha_2=country_input)
+    if not country:
+        country = pycountry.countries.get(alpha_3=country_input)
     if not country:
         raise HTTPException(status_code=400, detail="Country not found.")
+
     country_code = country.alpha_2
 
-    if not country_code:
-        raise HTTPException(status_code=400, detail="Country not supported")
+    # Check if the country code is supported by the 'holidays' library
+    supported_countries = holidays.list_supported_countries()
+    if country_code not in supported_countries:
+        raise HTTPException(status_code=400, detail="Country not supported for public holidays.")
 
     # Determine country holidays
     try:
         country_holidays = holidays.CountryHoliday(country_code)
     except (NotImplementedError, KeyError):
-        raise HTTPException(status_code=400, detail="Country not supported")
+        raise HTTPException(status_code=400, detail="Error retrieving holidays for the country.")
     
     # Add public holidays to the calendar
     for day in calendar.days:
