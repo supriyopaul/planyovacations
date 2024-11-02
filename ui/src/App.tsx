@@ -1,75 +1,88 @@
 import React, { useState } from 'react';
-import { PreferencesSetup } from './components/PreferencesSetup';
-import { HolidaySetup } from './components/HolidaySetup';
-import { CalendarView } from './components/Calendar/CalendarView';
-
-type Step = 'welcome' | 'preferences' | 'holidays' | 'calendar';
-
-interface Preferences {
-  workweek: number;
-  leaveBalance: number;
-}
+import { Calendar as CalendarIcon } from 'lucide-react';
+import PlannerForm from './components/PlannerForm';
+import YearlyCalendar from './components/YearlyCalendar';
+import { fetchCalendarData, markHoliday, planLeave } from './utils/api';
+import type { CalendarResponse } from './types';
 
 function App() {
-  const [currentStep, setCurrentStep] = useState<Step>('welcome');
-  const [preferences, setPreferences] = useState<Preferences>({
-    workweek: 5,
-    leaveBalance: 20
-  });
+  const [calendarData, setCalendarData] = useState<CalendarResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = (countryCode: string) => {
-    setCurrentStep('calendar');
+  const handleSubmit = async (workWeek: number, startDate: string, leaveBalance: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchCalendarData(workWeek, startDate, leaveBalance);
+      setCalendarData(data);
+    } catch (err) {
+      setError('Unable to fetch calendar data. Please try again later.');
+      console.error('Failed to fetch calendar data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDateAction = async (date: string, name: string, type: 'holiday' | 'leave', endDate?: string) => {
+    if (!calendarData) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedData = type === 'holiday' 
+        ? await markHoliday(calendarData, date, name)
+        : await planLeave(calendarData, date, endDate || date, name);
+      setCalendarData(updatedData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
-      {currentStep === 'welcome' && (
-        <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-800 to-pink-800 relative overflow-hidden flex flex-col items-center justify-center">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20" />
-          
-          <div className="relative z-10 text-center">
-            <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
-              Welcome to the ultimate Vacation Optimizer!
-            </h1>
-            <p className="text-xl text-gray-200 mb-12 max-w-2xl mx-auto">
-              Let's make the most of your time off.
-            </p>
-            
-            <button 
-              onClick={() => setCurrentStep('preferences')}
-              className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-8 py-4 rounded-full
-                text-lg font-semibold transform transition-all duration-200 hover:scale-105
-                hover:shadow-xl hover:from-emerald-500 hover:to-teal-600
-                animate-[pulse_2s_ease-in-out_infinite] hover:animate-none
-                shadow-lg"
-            >
-              Plan My Year
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-4">
+            <CalendarIcon className="h-16 w-16 text-indigo-600" />
           </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Maximize Your Time Off—Plan Smarter, Vacation Better!
+          </h1>
+          <p className="text-xl text-gray-600">
+            Optimize your leave days and make the most of your precious time off
+          </p>
         </div>
-      )}
-      
-      {currentStep === 'preferences' && (
-        <div className="min-h-screen py-12">
-          <PreferencesSetup onComplete={(prefs) => {
-            setPreferences(prefs);
-            setCurrentStep('holidays');
-          }} />
-        </div>
-      )}
 
-      {currentStep === 'holidays' && (
-        <div className="min-h-screen py-12">
-          <HolidaySetup onContinue={handleContinue} />
+        <div className="bg-white rounded-xl shadow-xl p-6 mb-8">
+          <PlannerForm onSubmit={handleSubmit} loading={loading} />
         </div>
-      )}
 
-      {currentStep === 'calendar' && (
-        <CalendarView
-          workWeek={preferences.workweek}
-          leaveBalance={preferences.leaveBalance}
-        />
-      )}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {calendarData && calendarData.days.length > 0 && (
+          <div className="bg-white rounded-xl shadow-xl p-6">
+            <YearlyCalendar days={calendarData.days} onDateClick={handleDateAction} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
