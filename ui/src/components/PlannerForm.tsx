@@ -3,14 +3,20 @@ import { getSupportedCountries } from '../utils/api'; // Import the API function
 
 interface PlannerFormProps {
   onSubmit: (workWeek: number, startDate: string, leaveBalance: number, country: string) => void;
+  leaveBalance: number;
+  onLeaveBalanceChange: (newBalance: number) => void;
   loading: boolean;
 }
 
-const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading }) => {
+const PlannerForm: React.FC<PlannerFormProps> = ({
+  onSubmit,
+  leaveBalance,
+  onLeaveBalanceChange,
+  loading,
+}) => {
   const today = new Date().toISOString().split('T')[0];
   const [workWeek, setWorkWeek] = useState(5);
   const [startDate, setStartDate] = useState(today);
-  const [leaveBalance, setLeaveBalance] = useState(18);
   const [countries, setCountries] = useState<{ name: string; code: string }[]>([]);
   const [selectedCountry, setSelectedCountry] = useState('');
 
@@ -68,8 +74,10 @@ const PlannerForm: React.FC<PlannerFormProps> = ({ onSubmit, loading }) => {
             type="number"
             id="leaveBalance"
             value={leaveBalance}
-            onChange={(e) => setLeaveBalance(Number(e.target.value))}
-            min="0"
+            onChange={(e) => {
+              const newLeaveBalance = Number(e.target.value);
+              onLeaveBalanceChange(newLeaveBalance);
+            }}
             className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
         </div>

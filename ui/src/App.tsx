@@ -7,23 +7,32 @@ import {
   addPublicHolidaysByCountry,
   markHoliday,
   planLeave,
+  deleteHoliday,
+  deleteLeave,
 } from './utils/api';
 import type { CalendarResponse } from './types';
 
 function App() {
   const [calendarData, setCalendarData] = useState<CalendarResponse | null>(null);
+  const [leaveBalance, setLeaveBalance] = useState<number>(18);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (workWeek: number, startDate: string, leaveBalance: number, country: string) => {
+  const handleSubmit = async (
+    workWeek: number,
+    startDate: string,
+    leaveBalanceInput: number,
+    country: string
+  ) => {
     setLoading(true);
     setError(null);
     try {
-      let data = await fetchCalendarData(workWeek, startDate, leaveBalance);
+      let data = await fetchCalendarData(workWeek, startDate, leaveBalanceInput);
       if (country) {
         data = await addPublicHolidaysByCountry(data, country);
       }
       setCalendarData(data);
+      setLeaveBalance(data.leave_balance); // Update leave balance from calendar data
     } catch (err) {
       setError('Unable to fetch calendar data. Please try again later.');
       console.error('Failed to fetch calendar data:', err);
@@ -32,23 +41,61 @@ function App() {
     }
   };
 
-  const handleDateAction = async (date: string, name: string, type: 'holiday' | 'leave', endDate?: string) => {
+  const handleDateAction = async (
+    date: string,
+    name: string,
+    type: 'holiday' | 'leave',
+    endDate?: string
+  ) => {
     if (!calendarData) return;
-
+  
     setLoading(true);
     setError(null);
     try {
-      const updatedData = type === 'holiday' 
-        ? await markHoliday(calendarData, date, name)
-        : await planLeave(calendarData, date, endDate || date, name);
+      const updatedData =
+        type === 'holiday'
+          ? await markHoliday(calendarData, date, name)
+          : await planLeave(calendarData, date, endDate || date, name);
       setCalendarData(updatedData);
+      setLeaveBalance(updatedData.leave_balance); // Update leave balance
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
       setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDateDelete = async (
+    date: string,
+    type: 'holiday' | 'leave',
+    endDate?: string
+  ) => {
+    if (!calendarData) return;
+  
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedData =
+        type === 'holiday'
+          ? await deleteHoliday(calendarData, date)
+          : await deleteLeave(calendarData, date, endDate || date);
+      setCalendarData(updatedData);
+      setLeaveBalance(updatedData.leave_balance); // Update leave balance
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveBalanceChange = (newBalance: number) => {
+    setLeaveBalance(newBalance);
   };
 
   return (
@@ -67,7 +114,12 @@ function App() {
         </div>
 
         <div className="bg-white rounded-xl shadow-xl p-6 mb-8">
-          <PlannerForm onSubmit={handleSubmit} loading={loading} />
+        <PlannerForm
+          onSubmit={handleSubmit}
+          leaveBalance={leaveBalance}
+          onLeaveBalanceChange={handleLeaveBalanceChange}
+          loading={loading}
+        />
         </div>
 
         {error && (
@@ -87,7 +139,11 @@ function App() {
 
         {calendarData && calendarData.days.length > 0 && (
           <div className="bg-white rounded-xl shadow-xl p-6">
-            <YearlyCalendar days={calendarData.days} onDateClick={handleDateAction} />
+            <YearlyCalendar
+              days={calendarData.days}
+              onDateClick={handleDateAction}
+              onDateDelete={handleDateDelete}
+            />
           </div>
         )}
       </div>
