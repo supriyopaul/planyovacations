@@ -199,3 +199,63 @@ export async function addPublicHolidaysByCountry(
     throw new Error('Failed to add public holidays by country');
   }
 }
+
+export async function markPreferredPeriod(
+  calendar: CalendarResponse,
+  startDate: string,
+  endDate: string
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/preferred`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar,
+        from_date: startDate,
+        to_date: endDate,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error('Failed to mark preferred period');
+  }
+}
+
+export async function markUnpreferredPeriod(
+  calendar: CalendarResponse,
+  startDate: string,
+  endDate: string
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/unpreferred`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar,
+        from_date: startDate,
+        to_date: endDate,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error('Failed to mark unpreferred period');
+  }
+}

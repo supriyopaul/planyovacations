@@ -9,6 +9,8 @@ import {
   planLeave,
   deleteHoliday,
   deleteLeave,
+  markPreferredPeriod,
+  markUnpreferredPeriod,
 } from './utils/api';
 import type { CalendarResponse } from './types';
 
@@ -44,7 +46,7 @@ function App() {
   const handleDateAction = async (
     date: string,
     name: string,
-    type: 'holiday' | 'leave',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => {
     if (!calendarData) return;
@@ -52,12 +54,23 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const updatedData =
-        type === 'holiday'
-          ? await markHoliday(calendarData, date, name)
-          : await planLeave(calendarData, date, endDate || date, name);
+      let updatedData;
+      switch (type) {
+        case 'holiday':
+          updatedData = await markHoliday(calendarData, date, name);
+          break;
+        case 'leave':
+          updatedData = await planLeave(calendarData, date, endDate || date, name);
+          break;
+        case 'preferred':
+          updatedData = await markPreferredPeriod(calendarData, date, endDate || date);
+          break;
+        case 'unpreferred':
+          updatedData = await markUnpreferredPeriod(calendarData, date, endDate || date);
+          break;
+      }
       setCalendarData(updatedData);
-      setLeaveBalance(updatedData.leave_balance); // Update leave balance
+      setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';

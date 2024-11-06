@@ -18,14 +18,17 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
   const [workWeek, setWorkWeek] = useState(5);
   const [startDate, setStartDate] = useState(today);
   const [countries, setCountries] = useState<{ name: string; code: string }[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('IN');
 
   useEffect(() => {
     // Fetch supported countries when the component mounts
     getSupportedCountries()
       .then((data) => {
-        const initialOption = { name: 'Do not load public holidays', code: '' };
-        setCountries([initialOption, ...data]);
+        setCountries(data);
+        // If India exists in the list, keep it selected, otherwise select first country
+        if (!data.some(country => country.code === 'IN')) {
+          setSelectedCountry(data[0]?.code || '');
+        }
       })
       .catch((error) => {
         console.error('Failed to fetch supported countries:', error);
@@ -34,6 +37,10 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedCountry) {
+      alert('Please select a country');
+      return;
+    }
     onSubmit(workWeek, startDate, leaveBalance, selectedCountry);
   };
 
@@ -83,17 +90,19 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
         </div>
         <div>
           <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-            Country
+            Country <span className="text-red-500">*</span>
           </label>
           <select
             id="country"
             value={selectedCountry}
             onChange={(e) => setSelectedCountry(e.target.value)}
             className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
           >
-            {countries.map((country, index) => (
-              <option key={index} value={country.code}>
-                {country.name} {country.code ? `(${country.code})` : ''}
+            <option value="">Select a country</option>
+            {countries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name} ({country.code})
               </option>
             ))}
           </select>
@@ -102,7 +111,7 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
       <div className="flex justify-center">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !selectedCountry}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Calculating...' : 'Plan My Vacation'}

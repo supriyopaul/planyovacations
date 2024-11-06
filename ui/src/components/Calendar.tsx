@@ -79,15 +79,15 @@ const Calendar: React.FC<CalendarProps> = ({ days }) => {
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 rounded-full bg-blue-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Recommended</span>
+          <span className="text-sm text-gray-600">Recommended Leave</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 rounded-full bg-yellow-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Preferred Period</span>
+          <span className="text-sm text-gray-600">Preferred Leave Period</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 rounded-full bg-red-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Unpreferred Period</span>
+          <span className="text-sm text-gray-600">Unpreferred Leave Period</span>
         </div>
       </div>
     </div>
