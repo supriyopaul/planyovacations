@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CalendarDay } from '../types';
 import DateActionForm from './DateActionForm';
+import Legend from './Legend';
 
 interface YearlyCalendarProps {
   days: CalendarDay[];
@@ -139,10 +140,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Error handling omitted for brevity */}
-      <div className="flex flex-wrap gap-4 justify-center">
-        {/* Legend */}
-      </div>
+      <Legend />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {Object.entries(groupedDays).map(([monthKey, monthDays]) => {
           const [year, monthIndex] = monthKey.split('-').map(Number);

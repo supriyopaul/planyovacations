@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CalendarDay } from '../types';
+import Legend from './Legend';
 
 interface CalendarProps {
   days: CalendarDay[];
@@ -40,6 +41,7 @@ const Calendar: React.FC<CalendarProps> = ({ days }) => {
 
   return (
     <div className="space-y-8">
+      <Legend />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {months.map((month) => (
           <div key={month} className="bg-white rounded-lg shadow">
@@ -66,29 +68,6 @@ const Calendar: React.FC<CalendarProps> = ({ days }) => {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="flex flex-wrap gap-4 justify-center">
-        <div className="flex items-center">
-          <div className="w-4 h-4 rounded-full bg-purple-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Public Holiday</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 rounded-full bg-green-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Planned Leave</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 rounded-full bg-blue-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Recommended Leave</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 rounded-full bg-yellow-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Preferred Leave Period</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 rounded-full bg-red-100 mr-2"></div>
-          <span className="text-sm text-gray-600">Unpreferred Leave Period</span>
-        </div>
       </div>
     </div>
   );
