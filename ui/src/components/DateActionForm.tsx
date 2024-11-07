@@ -19,7 +19,7 @@ const DateActionForm: React.FC<DateActionFormProps> = ({ date, onSubmit, onCance
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const reason = type === 'preferred' ? 'Preferred Period' : 
-                  type === 'unpreferred' ? 'Unpreferred Period' : 
+                  type === 'unpreferred' ? 'Preferred Work Period' : 
                   name.trim();
     if (reason) {
       onSubmit(date, reason, type, ['leave', 'preferred', 'unpreferred'].includes(type) ? endDate : undefined);
@@ -35,7 +35,7 @@ const DateActionForm: React.FC<DateActionFormProps> = ({ date, onSubmit, onCance
             type === 'holiday' ? 'Public Holiday' : 
             type === 'leave' ? 'Planned Leave' :
             type === 'preferred' ? 'Preferred Period' : 
-            'Unpreferred Period'
+            'Preferred Work Period'
           } for {new Date(date).toLocaleDateString()}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +74,7 @@ const DateActionForm: React.FC<DateActionFormProps> = ({ date, onSubmit, onCance
                 onChange={() => setType('unpreferred')}
                 className="mr-2"
               />
-              Unpreferred Period
+              Preferred Work Period
             </label>
           </div>
           

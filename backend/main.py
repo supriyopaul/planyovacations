@@ -421,3 +421,45 @@ def import_calendar(calendar_data: dict):
         return calendar
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/calendar/preferred")
+def remove_preferred_leave_period(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+
+    for day in calendar.days:
+        if request.from_date <= day.date <= request.to_date:
+            if day.is_preferred_leave_period:
+                day.is_preferred_leave_period = False
+
+    return calendar
+
+@app.delete("/calendar/unpreferred")
+def remove_unpreferred_leave_period(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+
+    for day in calendar.days:
+        if request.from_date <= day.date <= request.to_date:
+            if day.is_unpreferred_leave_period:
+                day.is_unpreferred_leave_period = False
+
+    return calendar
+
+@app.delete("/calendar/recommended")
+def remove_recommended_leave(request: PlannedLeaveRequest):
+    calendar = request.calendar
+
+    if request.from_date > request.to_date:
+        raise HTTPException(status_code=400, detail="from_date cannot be later than to_date")
+
+    for day in calendar.days:
+        if request.from_date <= day.date <= request.to_date:
+            if day.is_recommended_leave:
+                day.is_recommended_leave = False
+
+    return calendar

@@ -10,7 +10,7 @@ const Legend: React.FC = () => {
     { color: 'bg-green-100', label: 'Planned Leave' },
     { color: 'bg-blue-100', label: 'Recommended Leave' },
     { color: 'bg-yellow-100', label: 'Preferred Vacation Period' },
-    { color: 'bg-red-100', label: 'Unpreferred Work Period' },
+    { color: 'bg-red-100', label: 'Preffered Work Period' },
   ];
 
   return (
