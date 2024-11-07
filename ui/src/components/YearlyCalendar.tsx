@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CalendarDay } from '../types';
 import DateActionForm from './DateActionForm';
 import Legend from './Legend';
+import DeleteConfirmationPopup from './DeleteConfirmationPopup';
 
 interface YearlyCalendarProps {
   days: CalendarDay[];
@@ -24,6 +25,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDeletePopup, setShowDeletePopup] = useState<{ date: string; property: string } | null>(null);
 
   const months = [
     'January',
@@ -111,12 +113,21 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     return classes;
   };
 
-  const handleDateClick = (date: string) => {
+  const handleDateClick = (date: string, day: CalendarDay) => {
     setError(null);
-    if (selectedDate === date) {
-      setSelectedDate(null);
+    if (day.is_public_holiday || day.is_planned_leave || day.is_recommended_leave || day.is_preferred_leave_period || day.is_unpreferred_leave_period) {
+      const property = day.is_public_holiday ? 'Public Holiday' :
+                       day.is_planned_leave ? 'Planned Leave' :
+                       day.is_recommended_leave ? 'Recommended Leave' :
+                       day.is_preferred_leave_period ? 'Preferred Vacation Period' :
+                       'Preferred Work Period';
+      setShowDeletePopup({ date, property });
     } else {
-      setSelectedDate(date);
+      if (selectedDate === date) {
+        setSelectedDate(null);
+      } else {
+        setSelectedDate(date);
+      }
     }
   };
 
@@ -137,6 +148,41 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
   };
 
   const groupedDays = groupByMonth(days);
+
+  const handleDelete = async () => {
+    if (!showDeletePopup || !calendarData) return;
+
+    const { date, property } = showDeletePopup;
+    setLoading(true);
+    setError(null);
+
+    try {
+      let updatedData;
+      switch (property) {
+        case 'Public Holiday':
+          updatedData = await deleteHoliday(calendarData, date, '');
+          break;
+        case 'Planned Leave':
+        case 'Recommended Leave':
+          updatedData = await deleteLeave(calendarData, date, date);
+          break;
+        case 'Preferred Vacation Period':
+          updatedData = await markPreferredPeriod(calendarData, date, date);
+          break;
+        case 'Preferred Work Period':
+          updatedData = await markUnpreferredPeriod(calendarData, date, date);
+          break;
+      }
+      setCalendarData(updatedData);
+      setLeaveBalance(updatedData.leave_balance);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+      setShowDeletePopup(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -166,7 +212,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
                     {day ? (
                       <div
                         className={getDayClass(day)}
-                        onClick={() => handleDateClick(day.date)}
+                        onClick={() => handleDateClick(day.date, day)}
                       >
                         {parseDateString(day.date).getDate()}
                         <div className="hidden group-hover:block absolute z-10 -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
@@ -193,6 +239,15 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
           date={selectedDate}
           onSubmit={handleDateAction}
           onCancel={() => setSelectedDate(null)}
+        />
+      )}
+
+      {showDeletePopup && (
+        <DeleteConfirmationPopup
+          date={showDeletePopup.date}
+          property={showDeletePopup.property}
+          onDelete={handleDelete}
+          onCancel={() => setShowDeletePopup(null)}
         />
       )}
     </div>
