@@ -17,6 +17,7 @@ interface YearlyCalendarProps {
   loading: boolean;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  onImport: (data: CalendarResponse) => void;
 }
 
 function parseDateString(dateString: string): Date {
@@ -32,6 +33,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
   loading,
   setLoading,
   setError,
+  onImport,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState<{ date: string; property: string } | null>(null);
@@ -183,6 +185,37 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const jsonString = JSON.stringify(calendarData);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calendar-export.json';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError('Failed to export calendar');
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedData = JSON.parse(text);
+      // You'll need to add an onImport handler to the props and implement it in App.tsx
+      // onImport(importedData);
+    } catch (err) {
+      setError('Failed to import calendar. Please check the file format.');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <Legend />
@@ -249,6 +282,26 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
           onCancel={() => setShowDeletePopup(null)}
         />
       )}
+
+      <div className="flex justify-center gap-4 pt-4 border-t border-gray-200">
+        <button
+          onClick={handleExport}
+          disabled={loading}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+        >
+          Export Calendar
+        </button>
+        
+        <label className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+          Import Calendar
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+        </label>
+      </div>
     </div>
   );
 };

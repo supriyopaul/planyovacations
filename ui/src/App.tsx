@@ -111,6 +111,15 @@ function App() {
     setLeaveBalance(newBalance);
   };
 
+  const handleImport = (importedData: CalendarResponse) => {
+    try {
+      setCalendarData(importedData);
+      setLeaveBalance(importedData.leave_balance);
+    } catch (err) {
+      setError('Failed to import calendar data');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -160,6 +169,7 @@ function App() {
               loading={loading}
               setLoading={setLoading}
               setError={setError}
+              onImport={handleImport}
             />
           </div>
         )}
