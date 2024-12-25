@@ -57,10 +57,9 @@ export async function markHoliday(
 
 export async function deleteHoliday(
   calendar: CalendarResponse,
-  date: string,
-  holidayName: string
+  date: string
 ): Promise<CalendarResponse> {
-  const url = `${BASE_URL}/calendar/holidays`;
+  const url = `${BASE_URL}/calendar/holiday/delete`;
   
   try {
     const response = await fetch(url, {
@@ -70,7 +69,7 @@ export async function deleteHoliday(
       },
       body: JSON.stringify({
         calendar,
-        holidays: [{ date, public_holiday_name: holidayName }],
+        holiday_date: date,
       }),
     });
 
@@ -78,10 +77,9 @@ export async function deleteHoliday(
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const data: CalendarResponse = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    throw new Error('Failed to mark holiday');
+    throw new Error('Failed to delete holiday');
   }
 }
 
@@ -122,10 +120,9 @@ export async function planLeave(
 export async function deleteLeave(
   calendar: CalendarResponse,
   startDate: string,
-  endDate: string,
-  reason: string
+  endDate: string
 ): Promise<CalendarResponse> {
-  const url = `${BASE_URL}/calendar/leave`;
+  const url = `${BASE_URL}/calendar/leave/delete`;
   
   try {
     const response = await fetch(url, {
@@ -137,17 +134,15 @@ export async function deleteLeave(
         calendar,
         from_date: startDate,
         to_date: endDate,
-        leave_reason: reason,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.detail || 'Failed to plan leave');
+      throw new Error(errorData.detail || 'Failed to delete leave');
     }
 
-    const data: CalendarResponse = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     throw error;
   }

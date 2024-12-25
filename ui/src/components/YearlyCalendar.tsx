@@ -6,12 +6,17 @@ import DeleteConfirmationPopup from './DeleteConfirmationPopup';
 
 interface YearlyCalendarProps {
   days: CalendarDay[];
+  calendarData: CalendarResponse;
   onDateClick: (
     date: string,
     name: string,
     type: 'holiday' | 'leave',
     endDate?: string
   ) => void;
+  onDateDelete: (date: string, type: 'holiday' | 'leave', endDate?: string) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
 function parseDateString(dateString: string): Date {
@@ -21,10 +26,14 @@ function parseDateString(dateString: string): Date {
 
 const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
   days,
+  calendarData,
   onDateClick,
+  onDateDelete,
+  loading,
+  setLoading,
+  setError,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState<{ date: string; property: string } | null>(null);
 
   const months = [
@@ -153,33 +162,23 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     if (!showDeletePopup || !calendarData) return;
 
     const { date, property } = showDeletePopup;
-    setLoading(true);
-    setError(null);
-
     try {
-      let updatedData;
       switch (property) {
         case 'Public Holiday':
-          updatedData = await deleteHoliday(calendarData, date, '');
+          await onDateDelete(date, 'holiday');
           break;
         case 'Planned Leave':
         case 'Recommended Leave':
-          updatedData = await deleteLeave(calendarData, date, date);
+          await onDateDelete(date, 'leave', date);
           break;
         case 'Preferred Vacation Period':
-          updatedData = await markPreferredPeriod(calendarData, date, date);
-          break;
         case 'Preferred Work Period':
-          updatedData = await markUnpreferredPeriod(calendarData, date, date);
+          await onDateClick(date, '', property === 'Preferred Vacation Period' ? 'preferred' : 'unpreferred', date);
           break;
       }
-      setCalendarData(updatedData);
-      setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Failed to update calendar. Please try again.');
     } finally {
-      setLoading(false);
       setShowDeletePopup(null);
     }
   };

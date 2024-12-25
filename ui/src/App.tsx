@@ -154,8 +154,12 @@ function App() {
           <div className="bg-white rounded-xl shadow-xl p-6">
             <YearlyCalendar
               days={calendarData.days}
+              calendarData={calendarData}
               onDateClick={handleDateAction}
               onDateDelete={handleDateDelete}
+              loading={loading}
+              setLoading={setLoading}
+              setError={setError}
             />
           </div>
         )}

@@ -145,7 +145,7 @@ def add_public_holiday(request: AddPublicHolidaysRequest):
 
     return calendar
     
-@app.delete("/calendar/holiday")
+@app.post("/calendar/holiday/delete")
 def delete_public_holiday(request: DeletePublicHolidayRequest):
     calendar = request.calendar
     holiday_date = request.holiday_date
@@ -194,7 +194,7 @@ def add_planned_leave(request: PlannedLeaveRequest):
 
     return calendar
 
-@app.delete("/calendar/leave")
+@app.post("/calendar/leave/delete")
 def remove_planned_leave(request: PlannedLeaveRequest):
     calendar = request.calendar
 
@@ -422,7 +422,7 @@ def import_calendar(calendar_data: dict):
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.delete("/calendar/preferred")
+@app.post("/calendar/preferred/delete")
 def remove_preferred_leave_period(request: PlannedLeaveRequest):
     calendar = request.calendar
 
@@ -436,7 +436,7 @@ def remove_preferred_leave_period(request: PlannedLeaveRequest):
 
     return calendar
 
-@app.delete("/calendar/unpreferred")
+@app.post("/calendar/unpreferred/delete")
 def remove_unpreferred_leave_period(request: PlannedLeaveRequest):
     calendar = request.calendar
 
