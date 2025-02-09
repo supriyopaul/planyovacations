@@ -13,7 +13,11 @@ interface YearlyCalendarProps {
     type: 'holiday' | 'leave',
     endDate?: string
   ) => void;
-  onDateDelete: (date: string, type: 'holiday' | 'leave', endDate?: string) => void;
+  onDateDelete: (
+    date: string,
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
+    endDate?: string
+  ) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -162,7 +166,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
 
   const handleDelete = async () => {
     if (!showDeletePopup || !calendarData) return;
-
+  
     const { date, property } = showDeletePopup;
     try {
       switch (property) {
@@ -174,8 +178,12 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
           await onDateDelete(date, 'leave', date);
           break;
         case 'Preferred Vacation Period':
+          await onDateDelete(date, 'preferred', date);
+          break;
         case 'Preferred Work Period':
-          await onDateClick(date, '', property === 'Preferred Vacation Period' ? 'preferred' : 'unpreferred', date);
+          await onDateDelete(date, 'unpreferred', date);
+          break;
+        default:
           break;
       }
     } catch (err) {
@@ -183,7 +191,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     } finally {
       setShowDeletePopup(null);
     }
-  };
+  };  
 
   const handleExport = async () => {
     try {

@@ -11,6 +11,8 @@ import {
   deleteLeave,
   markPreferredPeriod,
   markUnpreferredPeriod,
+  deletePreferredPeriod,
+  deleteUnpreferredPeriod,
 } from './utils/api';
 import type { CalendarResponse } from './types';
 
@@ -83,7 +85,7 @@ function App() {
 
   const handleDateDelete = async (
     date: string,
-    type: 'holiday' | 'leave',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => {
     if (!calendarData) return;
@@ -91,12 +93,18 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const updatedData =
-        type === 'holiday'
-          ? await deleteHoliday(calendarData, date)
-          : await deleteLeave(calendarData, date, endDate || date);
+      let updatedData;
+      if (type === 'holiday') {
+        updatedData = await deleteHoliday(calendarData, date);
+      } else if (type === 'leave') {
+        updatedData = await deleteLeave(calendarData, date, endDate || date);
+      } else if (type === 'preferred') {
+        updatedData = await deletePreferredPeriod(calendarData, date, endDate || date);
+      } else if (type === 'unpreferred') {
+        updatedData = await deleteUnpreferredPeriod(calendarData, date, endDate || date);
+      }
       setCalendarData(updatedData);
-      setLeaveBalance(updatedData.leave_balance); // Update leave balance
+      setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update calendar. Please try again.';
@@ -105,7 +113,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const handleLeaveBalanceChange = (newBalance: number) => {
     setLeaveBalance(newBalance);

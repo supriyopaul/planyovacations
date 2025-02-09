@@ -254,3 +254,59 @@ export async function markUnpreferredPeriod(
     throw new Error('Failed to mark unpreferred period');
   }
 }
+
+export async function deletePreferredPeriod(
+  calendar: CalendarResponse,
+  startDate: string,
+  endDate: string
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/preferred/delete`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar,
+        from_date: startDate,
+        to_date: endDate,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete preferred period');
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function deleteUnpreferredPeriod(
+  calendar: CalendarResponse,
+  startDate: string,
+  endDate: string
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/unpreferred/delete`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        calendar,
+        from_date: startDate,
+        to_date: endDate,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete unpreferred period');
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}

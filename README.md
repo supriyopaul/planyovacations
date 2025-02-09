@@ -5,6 +5,6 @@ Calendar app to plan leaves and vacations
 ```
 python -m venv venv     
 source venv/bin/activate
-uvicorn main:app --reload
+uvicorn main:app --reload --log-level debug
 pip install -r requeirements.txt 
 ```
