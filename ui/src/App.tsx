@@ -13,6 +13,7 @@ import {
   markUnpreferredPeriod,
   deletePreferredPeriod,
   deleteUnpreferredPeriod,
+  recommendLeaves,
 } from './utils/api';
 import type { CalendarResponse } from './types';
 
@@ -35,6 +36,7 @@ function App() {
       if (country) {
         data = await addPublicHolidaysByCountry(data, country);
       }
+      data = await recommendLeaves(data);
       setCalendarData(data);
       setLeaveBalance(data.leave_balance); // Update leave balance from calendar data
     } catch (err) {
@@ -71,6 +73,7 @@ function App() {
           updatedData = await markUnpreferredPeriod(calendarData, date, endDate || date);
           break;
       }
+      updatedData = await recommendLeaves(updatedData);
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
@@ -103,6 +106,7 @@ function App() {
       } else if (type === 'unpreferred') {
         updatedData = await deleteUnpreferredPeriod(calendarData, date, endDate || date);
       }
+      updatedData = await recommendLeaves(updatedData);
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {

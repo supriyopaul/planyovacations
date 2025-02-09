@@ -310,3 +310,23 @@ export async function deleteUnpreferredPeriod(
     throw error;
   }
 }
+
+export async function recommendLeaves(
+  calendar: CalendarResponse
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/recommend_leaves`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(calendar),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to get leave recommendations');
+    }
+    return await response.json();
+  } catch (error) {
+    throw new Error('Failed to get leave recommendations');
+  }
+}
