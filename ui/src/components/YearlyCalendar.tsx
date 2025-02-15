@@ -10,12 +10,12 @@ interface YearlyCalendarProps {
   onDateClick: (
     date: string,
     name: string,
-    type: 'holiday' | 'leave',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => void;
   onDateDelete: (
     date: string,
-    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => void;
   loading: boolean;
@@ -149,7 +149,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
   const handleDateAction = async (
     date: string,
     name: string,
-    type: 'holiday' | 'leave',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => {
     try {

@@ -247,8 +247,17 @@ def add_unpreferred_leave_period(request: PlannedLeaveRequest):
     return calendar
 
 @app.post("/calendar/recommend_leaves")
-def recommend_leaves(request: Calendar):
+def recommend_leaves(request: Calendar, clear: bool = True):
     calendar = request
+
+    # If clear is True, restore leave balance by adding back any previously suggested (but not locked) days,
+    # and clear the recommended leave flags.
+    if clear:
+        num_recommended = sum(1 for day in calendar.days if day.is_recommended_leave)
+        calendar.leave_balance += num_recommended
+        for day in calendar.days:
+            day.is_recommended_leave = False
+
     candidates = []
     remaining_leave_balance = calendar.leave_balance  # Initialize remaining leave balance
 
@@ -269,7 +278,7 @@ def recommend_leaves(request: Calendar):
     # Rank candidates
     rank_candidates(candidates)
     
-    # Select candidates within leave balance
+    # Select candidates within leave balance and deduct from the remaining balance
     for candidate in candidates:
         LD = candidate['leave_days_required']
         if LD <= remaining_leave_balance:
@@ -280,7 +289,7 @@ def recommend_leaves(request: Calendar):
         else:
             continue  # Skip if insufficient leave balance
 
-    # Update the leave balance in the calendar
+    # Update the leave balance in the calendar to reflect the deducted suggested days
     calendar.leave_balance = remaining_leave_balance
 
     return calendar
