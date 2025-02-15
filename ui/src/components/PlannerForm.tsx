@@ -6,6 +6,8 @@ interface PlannerFormProps {
   leaveBalance: number;
   onLeaveBalanceChange: (newBalance: number) => void;
   loading: boolean;
+  isCalendarLoaded?: boolean;
+  onReset?: () => void;
 }
 
 const PlannerForm: React.FC<PlannerFormProps> = ({
@@ -13,6 +15,8 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
   leaveBalance,
   onLeaveBalanceChange,
   loading,
+  isCalendarLoaded = false,
+  onReset,
 }) => {
   const today = new Date().toISOString().split('T')[0];
   const [workWeek, setWorkWeek] = useState(5);
@@ -37,12 +41,22 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCalendarLoaded && onReset) {
+      onReset();
+      return;
+    }
     if (!selectedCountry) {
       alert('Please select a country');
       return;
     }
     onSubmit(workWeek, startDate, leaveBalance, selectedCountry);
   };
+
+  const buttonClasses = `inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
+    isCalendarLoaded
+      ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+      : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+  } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -111,10 +125,10 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
       <div className="flex justify-center">
         <button
           type="submit"
-          disabled={loading || !selectedCountry}
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || (!isCalendarLoaded && !selectedCountry)}
+          className={buttonClasses}
         >
-          {loading ? 'Calculating...' : 'Plan My Vacation'}
+          {loading ? 'Calculating...' : (isCalendarLoaded ? 'Reset calendar' : 'Plan My Vacation')}
         </button>
       </div>
     </form>

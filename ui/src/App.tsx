@@ -148,12 +148,13 @@ function App() {
         </div>
 
         <div className="bg-white rounded-xl shadow-xl p-6 mb-8">
-        <PlannerForm
-          onSubmit={handleSubmit}
-          leaveBalance={leaveBalance}
-          onLeaveBalanceChange={handleLeaveBalanceChange}
-          loading={loading}
-        />
+          <PlannerForm
+            onSubmit={handleSubmit}
+            leaveBalance={leaveBalance}
+            onLeaveBalanceChange={handleLeaveBalanceChange}
+            loading={loading}
+            isCalendarLoaded={!!calendarData}
+          />
         </div>
 
         {error && (
