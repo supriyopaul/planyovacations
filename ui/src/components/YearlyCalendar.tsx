@@ -77,21 +77,17 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
       (a, b) => parseDateString(a.date).getTime() - parseDateString(b.date).getTime()
     );
 
-    // Get the first day of the month, not just the first date in our range
     const firstDate = parseDateString(sortedMonthDays[0].date);
     const firstDayOfMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
     const firstDayOfWeek = firstDayOfMonth.getDay();
 
-    // Create empty slots for days before the first day of month
     const grid: (CalendarDay | null)[] = Array(firstDayOfWeek).fill(null);
 
-    // Create empty slots for days before our start date in the month
     const daysBeforeStart = firstDate.getDate() - 1;
     if (daysBeforeStart > 0) {
       grid.push(...Array(daysBeforeStart).fill(null));
     }
 
-    // Add the actual days
     sortedMonthDays.forEach((day) => {
       grid.push(day);
     });
@@ -191,7 +187,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     } finally {
       setShowDeletePopup(null);
     }
-  };  
+  };
 
   const handleExport = async () => {
     try {
@@ -217,8 +213,10 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     try {
       const text = await file.text();
       const importedData = JSON.parse(text);
-      // You'll need to add an onImport handler to the props and implement it in App.tsx
-      // onImport(importedData);
+      console.log('Imported Data:', importedData);
+      onImport(importedData);
+      // Reset the file input so that importing the same file again will trigger onChange.
+      event.target.value = '';
     } catch (err) {
       setError('Failed to import calendar. Please check the file format.');
     }
