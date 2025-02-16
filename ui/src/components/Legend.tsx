@@ -1,16 +1,20 @@
+import React from 'react';
+
 interface LegendItem {
+  type: 'fill' | 'text' | 'border';
   color: string;
   label: string;
+  content?: string;
 }
 
 const Legend: React.FC = () => {
   const items: LegendItem[] = [
-    { color: 'bg-gray-100', label: 'Week Off' },
-    { color: 'bg-purple-100', label: 'Public Holiday' },
-    { color: 'bg-green-100', label: 'Planned Leave' },
-    { color: 'bg-blue-100', label: 'Recommended Leave' },
-    { color: 'bg-yellow-100', label: 'Preferred Vacation Period' },
-    { color: 'bg-red-100', label: 'Preffered Work Period' },
+    { type: 'fill', color: 'bg-green-50', label: 'Week Off' },
+    { type: 'text', color: 'text-green-700 font-bold', label: 'Holiday (H, circled if in period)', content: 'H' },
+    { type: 'text', color: 'text-green-700 font-bold', label: 'Leave (L)', content: 'L' },
+    { type: 'text', color: 'text-green-700 font-bold', label: 'Recommended Leave (R, circled if in period)', content: 'R' },
+    { type: 'border', color: 'border-2 border-green-500', label: 'Preferred Vacation Period' },
+    { type: 'border', color: 'border-2 border-red-500', label: 'Preferred Work Period' },
   ];
 
   return (
@@ -19,7 +23,13 @@ const Legend: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {items.map((item) => (
           <div key={item.label} className="flex items-center">
-            <div className={`w-6 h-6 rounded-full ${item.color} mr-2 border border-gray-200`}></div>
+            {item.type === 'text' ? (
+              <div className="w-6 h-6 rounded-full flex items-center justify-center mr-2 border border-gray-200 bg-green-50">
+                <span className={item.color}>{item.content}</span>
+              </div>
+            ) : (
+              <div className={`w-6 h-6 rounded-full mr-2 ${item.color}`}></div>
+            )}
             <span className="text-sm text-gray-600">{item.label}</span>
           </div>
         ))}

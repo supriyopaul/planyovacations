@@ -10,12 +10,12 @@ interface YearlyCalendarProps {
   onDateClick: (
     date: string,
     name: string,
-    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => void;
   onDateDelete: (
     date: string,
-    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => void;
   loading: boolean;
@@ -100,28 +100,55 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
 
     let classes =
       'relative group h-8 w-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-colors ';
-
     if (day.date === selectedDate) {
       classes += 'ring-2 ring-indigo-500 ring-offset-2 ';
     }
 
+    // Weekend days: light green background.
     if (day.is_weekend) {
-      classes += 'bg-gray-100 text-gray-500 hover:bg-gray-200 ';
-    } else if (day.is_public_holiday) {
-      classes += 'bg-purple-100 text-purple-800 hover:bg-purple-200 ';
+      classes += 'bg-green-50 text-gray-400 hover:bg-green-50 ';
+      return classes;
+    }
+
+    if (day.is_public_holiday) {
+      if (day.is_preferred_leave_period) {
+        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+      } else if (day.is_unpreferred_leave_period) {
+        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+      } else {
+        classes += 'bg-green-50 text-green-700 font-bold ';
+      }
     } else if (day.is_planned_leave) {
-      classes += 'bg-green-100 text-green-800 hover:bg-green-200 ';
+      if (day.is_preferred_leave_period) {
+        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+      } else if (day.is_unpreferred_leave_period) {
+        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+      } else {
+        classes += 'bg-green-50 text-green-700 font-bold ';
+      }
     } else if (day.is_recommended_leave) {
-      classes += 'bg-blue-100 text-blue-800 hover:bg-blue-200 ';
+      if (day.is_preferred_leave_period) {
+        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+      } else if (day.is_unpreferred_leave_period) {
+        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+      } else {
+        classes += 'bg-green-50 text-green-700 font-bold ';
+      }
     } else if (day.is_preferred_leave_period) {
-      classes += 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 ';
+      classes += 'border-2 border-green-500 bg-green-50 ';
     } else if (day.is_unpreferred_leave_period) {
-      classes += 'bg-red-100 text-red-800 hover:bg-red-200 ';
+      classes += 'border-2 border-red-500 bg-green-50 ';
     } else {
       classes += 'hover:bg-gray-100 ';
     }
-
     return classes;
+  };
+
+  const renderDayContent = (day: CalendarDay) => {
+    if (day.is_public_holiday) return 'H';
+    if (day.is_planned_leave) return 'L';
+    if (day.is_recommended_leave) return 'R';
+    return parseDateString(day.date).getDate();
   };
 
   const handleDateClick = (date: string, day: CalendarDay) => {
@@ -145,7 +172,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
   const handleDateAction = async (
     date: string,
     name: string,
-    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred' | 'preferred' | 'unpreferred',
+    type: 'holiday' | 'leave' | 'preferred' | 'unpreferred',
     endDate?: string
   ) => {
     try {
@@ -215,7 +242,6 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
       const importedData = JSON.parse(text);
       console.log('Imported Data:', importedData);
       onImport(importedData);
-      // Reset the file input so that importing the same file again will trigger onChange.
       event.target.value = '';
     } catch (err) {
       setError('Failed to import calendar. Please check the file format.');
@@ -237,12 +263,12 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
                 {`${monthName} ${year}`}
               </h3>
               <div className="grid grid-cols-7 gap-1">
-                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((dayLabel) => (
                   <div
-                    key={day}
+                    key={dayLabel}
                     className="text-center text-xs font-medium text-gray-500"
                   >
-                    {day}
+                    {dayLabel}
                   </div>
                 ))}
                 {grid.map((day, index) => (
@@ -252,7 +278,7 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
                         className={getDayClass(day)}
                         onClick={() => handleDateClick(day.date, day)}
                       >
-                        {parseDateString(day.date).getDate()}
+                        {renderDayContent(day)}
                         <div className="hidden group-hover:block absolute z-10 -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
                           {day.is_public_holiday
                             ? day.public_holiday_name
