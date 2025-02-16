@@ -14,11 +14,12 @@ from models import (
     CountryHolidayRequest,
     AddPublicHolidaysRequest,
     DeletePublicHolidayRequest,
+    RejectRecommendedLeaveRequest,
 )
 
 
 
-EXTENDED_LEAVE_REASON = "Extended Leave"
+EXTENDED_LEAVE_REASON = "Recommended Leave"
 CALENDAR_RANGE = 365
 
 app = FastAPI()
@@ -70,7 +71,6 @@ def get_calendar(
 
     calendar = Calendar(leave_balance=leave_balance, days=days)
     return calendar
-
 
 @app.get("/countries")
 def get_supported_countries():
@@ -381,7 +381,6 @@ def lock_recommended_leave(calendar: Calendar, date_to_lock: date):
                 day.is_planned_leave = True
                 day.leave_reason = EXTENDED_LEAVE_REASON
                 day.is_recommended_leave = False
-                calendar.leave_balance = calendar.leave_balance - 1
                 updated_calendar = recommend_leaves(calendar)
                 return updated_calendar
             else:
@@ -389,12 +388,15 @@ def lock_recommended_leave(calendar: Calendar, date_to_lock: date):
     raise HTTPException(status_code=404, detail="Date not found in calendar")
 
 @app.post("/calendar/reject_recommended_leave")
-def reject_recommended_leave(calendar: Calendar, date_to_reject: date):
+def reject_recommended_leave(request: RejectRecommendedLeaveRequest):
+    calendar = request.calendar
+    date_to_reject = request.date_to_reject
     for day in calendar.days:
         if day.date == date_to_reject:
             if day.is_recommended_leave:
                 day.is_unpreferred_leave_period = True
                 day.is_recommended_leave = False
+                calendar.leave_balance = calendar.leave_balance + 1
                 updated_calendar = recommend_leaves(calendar)
                 return updated_calendar
             else:

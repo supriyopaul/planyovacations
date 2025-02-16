@@ -14,6 +14,7 @@ import {
   deletePreferredPeriod,
   deleteUnpreferredPeriod,
   recommendLeaves,
+  rejectRecommendedLeave
 } from './utils/api';
 import type { CalendarResponse } from './types';
 
@@ -36,7 +37,6 @@ function App() {
       if (country) {
         data = await addPublicHolidaysByCountry(data, country);
       }
-      // Removed automatic recommendations call here
       setCalendarData(data);
       setLeaveBalance(data.leave_balance);
     } catch (err) {
@@ -73,7 +73,6 @@ function App() {
           updatedData = await markUnpreferredPeriod(calendarData, date, endDate || date);
           break;
       }
-      // Removed automatic recommendations call here
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
@@ -100,13 +99,17 @@ function App() {
       if (type === 'holiday') {
         updatedData = await deleteHoliday(calendarData, date);
       } else if (type === 'leave') {
-        updatedData = await deleteLeave(calendarData, date, endDate || date);
+        const day = calendarData.days.find((d) => d.date === date);
+        if (day && day.is_recommended_leave) {
+          updatedData = await rejectRecommendedLeave(calendarData, date);
+        } else {
+          updatedData = await deleteLeave(calendarData, date, endDate || date);
+        }
       } else if (type === 'preferred') {
         updatedData = await deletePreferredPeriod(calendarData, date, endDate || date);
       } else if (type === 'unpreferred') {
         updatedData = await deleteUnpreferredPeriod(calendarData, date, endDate || date);
       }
-      // Removed automatic recommendations call here
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {

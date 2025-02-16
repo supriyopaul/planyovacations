@@ -330,3 +330,27 @@ export async function recommendLeaves(
     throw new Error('Failed to get leave recommendations');
   }
 }
+
+export async function rejectRecommendedLeave(
+  calendar: CalendarResponse,
+  date: string
+): Promise<CalendarResponse> {
+  const url = `${BASE_URL}/calendar/reject_recommended_leave`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        calendar,
+        date_to_reject: date,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to reject recommended leave');
+    }
+    return await response.json();
+  } catch (error) {
+    throw new Error('Failed to reject recommended leave');
+  }
+}

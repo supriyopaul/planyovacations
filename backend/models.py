@@ -38,3 +38,9 @@ class AddPublicHolidaysRequest(BaseModel):
 class DeletePublicHolidayRequest(BaseModel):
     calendar: Calendar
     holiday_date: date
+
+class RejectRecommendedLeaveRequest(BaseModel):
+    calendar: Calendar
+    date_to_reject: date
+    class Config:
+        extra = "allow"
