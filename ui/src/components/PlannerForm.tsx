@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { getSupportedCountries } from '../utils/api'; // Import the API function
+import { getSupportedCountries } from '../utils/api';
 
 interface PlannerFormProps {
   onSubmit: (workWeek: number, startDate: string, leaveBalance: number, country: string) => void;
+  onReset?: () => void;
+  onLoadRecommendations?: () => void;
   leaveBalance: number;
   onLeaveBalanceChange: (newBalance: number) => void;
   loading: boolean;
   isCalendarLoaded?: boolean;
-  onReset?: () => void;
 }
 
 const PlannerForm: React.FC<PlannerFormProps> = ({
   onSubmit,
+  onReset,
+  onLoadRecommendations,
   leaveBalance,
   onLeaveBalanceChange,
   loading,
   isCalendarLoaded = false,
-  onReset,
 }) => {
   const today = new Date().toISOString().split('T')[0];
   const [workWeek, setWorkWeek] = useState(5);
@@ -25,11 +27,9 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
   const [selectedCountry, setSelectedCountry] = useState('IN');
 
   useEffect(() => {
-    // Fetch supported countries when the component mounts
     getSupportedCountries()
       .then((data) => {
         setCountries(data);
-        // If India exists in the list, keep it selected, otherwise select first country
         if (!data.some(country => country.code === 'IN')) {
           setSelectedCountry(data[0]?.code || '');
         }
@@ -41,22 +41,16 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isCalendarLoaded && onReset) {
-      onReset();
-      return;
+    if (!isCalendarLoaded) {
+      if (!selectedCountry) {
+        alert('Please select a country');
+        return;
+      }
+      onSubmit(workWeek, startDate, leaveBalance, selectedCountry);
     }
-    if (!selectedCountry) {
-      alert('Please select a country');
-      return;
-    }
-    onSubmit(workWeek, startDate, leaveBalance, selectedCountry);
   };
 
-  const buttonClasses = `inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-    isCalendarLoaded
-      ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-      : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
-  } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
+  const buttonClasses = `inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -123,13 +117,38 @@ const PlannerForm: React.FC<PlannerFormProps> = ({
         </div>
       </div>
       <div className="flex justify-center">
-        <button
-          type="submit"
-          disabled={loading || (!isCalendarLoaded && !selectedCountry)}
-          className={buttonClasses}
-        >
-          {loading ? 'Calculating...' : (isCalendarLoaded ? 'Reset calendar' : 'Plan My Vacation')}
-        </button>
+        {isCalendarLoaded ? (
+          <>
+            {onReset && (
+              <button
+                type="button"
+                onClick={onReset}
+                disabled={loading}
+                className={`${buttonClasses} bg-red-600 hover:bg-red-700 focus:ring-red-500`}
+              >
+                Reset calendar
+              </button>
+            )}
+            {onLoadRecommendations && (
+              <button
+                type="button"
+                onClick={onLoadRecommendations}
+                disabled={loading}
+                className={`${buttonClasses} bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 ml-4`}
+              >
+                Load recommendations
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            type="submit"
+            disabled={loading || !selectedCountry}
+            className={`${buttonClasses} bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500`}
+          >
+            {loading ? 'Calculating...' : 'Plan My Vacation'}
+          </button>
+        )}
       </div>
     </form>
   );

@@ -36,9 +36,9 @@ function App() {
       if (country) {
         data = await addPublicHolidaysByCountry(data, country);
       }
-      data = await recommendLeaves(data);
+      // Removed automatic recommendations call here
       setCalendarData(data);
-      setLeaveBalance(data.leave_balance); // Update leave balance from calendar data
+      setLeaveBalance(data.leave_balance);
     } catch (err) {
       setError('Unable to fetch calendar data. Please try again later.');
       console.error('Failed to fetch calendar data:', err);
@@ -73,7 +73,7 @@ function App() {
           updatedData = await markUnpreferredPeriod(calendarData, date, endDate || date);
           break;
       }
-      updatedData = await recommendLeaves(updatedData);
+      // Removed automatic recommendations call here
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
@@ -106,7 +106,7 @@ function App() {
       } else if (type === 'unpreferred') {
         updatedData = await deleteUnpreferredPeriod(calendarData, date, endDate || date);
       }
-      updatedData = await recommendLeaves(updatedData);
+      // Removed automatic recommendations call here
       setCalendarData(updatedData);
       setLeaveBalance(updatedData.leave_balance);
     } catch (err) {
@@ -117,7 +117,28 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };  
+  };
+
+  const handleLoadRecommendations = async () => {
+    if (!calendarData) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedData = await recommendLeaves(calendarData);
+      setCalendarData(updatedData);
+      setLeaveBalance(updatedData.leave_balance);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load recommendations';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setCalendarData(null);
+  };
 
   const handleLeaveBalanceChange = (newBalance: number) => {
     setLeaveBalance(newBalance);
@@ -150,6 +171,8 @@ function App() {
         <div className="bg-white rounded-xl shadow-xl p-6 mb-8">
           <PlannerForm
             onSubmit={handleSubmit}
+            onReset={handleReset}
+            onLoadRecommendations={handleLoadRecommendations}
             leaveBalance={leaveBalance}
             onLeaveBalanceChange={handleLeaveBalanceChange}
             loading={loading}
