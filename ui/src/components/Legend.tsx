@@ -10,9 +10,9 @@ interface LegendItem {
 const Legend: React.FC = () => {
   const items: LegendItem[] = [
     { type: 'fill', color: 'bg-green-50', label: 'Week Off' },
-    { type: 'text', color: 'text-green-700 font-bold', label: 'Holiday (H, circled if in period)', content: 'H' },
+    { type: 'text', color: 'text-green-700 font-bold', label: 'Holiday', content: 'H' },
     { type: 'text', color: 'text-green-700 font-bold', label: 'Leave (L)', content: 'L' },
-    { type: 'text', color: 'text-green-700 font-bold', label: 'Recommended Leave (R, circled if in period)', content: 'R' },
+    { type: 'text', color: 'text-green-700 font-bold', label: 'Recommended Leave', content: 'R' },
     { type: 'border', color: 'border-2 border-green-500', label: 'Preferred Vacation Period' },
     { type: 'border', color: 'border-2 border-red-500', label: 'Preferred Work Period' },
   ];

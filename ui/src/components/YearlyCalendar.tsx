@@ -112,32 +112,32 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
 
     if (day.is_public_holiday) {
       if (day.is_preferred_leave_period) {
-        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-green-500 text-green-700 font-bold ';
       } else if (day.is_unpreferred_leave_period) {
-        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-red-500 text-green-700 font-bold ';
       } else {
         classes += 'bg-green-50 text-green-700 font-bold ';
       }
     } else if (day.is_planned_leave) {
       if (day.is_preferred_leave_period) {
-        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-green-500 text-green-700 font-bold ';
       } else if (day.is_unpreferred_leave_period) {
-        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-red-500 text-green-700 font-bold ';
       } else {
         classes += 'bg-green-50 text-green-700 font-bold ';
       }
     } else if (day.is_recommended_leave) {
       if (day.is_preferred_leave_period) {
-        classes += 'border-2 border-green-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-green-500 text-green-700 font-bold ';
       } else if (day.is_unpreferred_leave_period) {
-        classes += 'border-2 border-red-500 bg-green-50 text-green-700 font-bold ';
+        classes += 'border-2 border-red-500 text-green-700 font-bold ';
       } else {
         classes += 'bg-green-50 text-green-700 font-bold ';
       }
     } else if (day.is_preferred_leave_period) {
-      classes += 'border-2 border-green-500 bg-green-50 ';
+      classes += 'border-2 border-green-500 ';
     } else if (day.is_unpreferred_leave_period) {
-      classes += 'border-2 border-red-500 bg-green-50 ';
+      classes += 'border-2 border-red-500 ';
     } else {
       classes += 'hover:bg-gray-100 ';
     }
