@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Menu, X, PlusCircle, Clock, Zap, Import, Import as Export, Settings, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, X, Paintbrush, Import, Import as Export, Settings, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarProps } from '../../types';
 import { useLeave } from '../../context/LeaveContext';
 import { LeavePreferenceSlider } from '../QuickActions/LeavePreferenceSlider';
 import { SuggestedLeaveList } from '../QuickActions/SuggestedLeaveList';
 import { WeekendMarker } from '../WeekendMarker';
+import { EventType } from '../../types';
 
 // Utility to format date for input type=date
 const formatDateInput = (date: Date | null) =>
@@ -12,9 +13,44 @@ const formatDateInput = (date: Date | null) =>
 
 interface SidebarWithOffDaysProps extends SidebarProps {
   setOffDays: (offDays: number[]) => void;
+  selectedBrush: EventType | null;
+  setSelectedBrush: (brush: EventType | null) => void;
 }
 
-export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onToggleCollapse, setOffDays }) => {
+const brushTypes = [
+  {
+    type: EventType.HOLIDAY,
+    label: 'Public Holiday',
+    color: 'text-blue-600',
+    bg: 'bg-blue-100',
+  },
+  {
+    type: EventType.OPTIONAL_HOLIDAY,
+    label: 'Optional Holiday',
+    color: 'text-yellow-700',
+    bg: 'bg-yellow-100',
+  },
+  {
+    type: EventType.PLANNED_LEAVE,
+    label: 'Planned Leave',
+    color: 'text-teal-600',
+    bg: 'bg-teal-100',
+  },
+  {
+    type: EventType.BUSY_PERIOD,
+    label: 'Busy Work Period',
+    color: 'text-red-600',
+    bg: 'bg-red-100',
+  },
+  {
+    type: EventType.SLOW_PERIOD,
+    label: 'Slow Work Period',
+    color: 'text-amber-700',
+    bg: 'bg-amber-100',
+  },
+];
+
+export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onToggleCollapse, setOffDays, selectedBrush, setSelectedBrush }) => {
   const {
     setIsCreatingEvent,
     calendarView,
@@ -120,53 +156,37 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
       {/* Editable Leave Balance */}
       <div className="px-4 py-3 border-b border-slate-300">
         <h3 className="text-sm font-medium text-slate-600 mb-2">Leave Balance</h3>
-        <div className="flex items-center gap-2 mb-2">
-          <label htmlFor="leave-balance-total" className="text-xs text-slate-600">Total:</label>
-          <input type="number" id="leave-balance-total" min={0} value={leaveBalance.total} onChange={handleLeaveBalanceChange} className="w-16 px-2 py-1 border border-slate-300 rounded text-sm" />
-        </div>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div>
-            <span className="block text-sm font-semibold">{leaveBalance.total}</span>
-            <span className="text-xs text-slate-500">Total</span>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center">
+            <label htmlFor="leave-balance-total" className="text-xs text-slate-600 mb-1">Total</label>
+            <input type="number" id="leave-balance-total" min={0} value={leaveBalance.total} onChange={handleLeaveBalanceChange} className="w-16 px-2 py-1 border border-slate-300 rounded text-sm text-center" />
           </div>
-          <div>
-            <span className="block text-sm font-semibold">{leaveBalance.used}</span>
-            <span className="text-xs text-slate-500">Used</span>
-          </div>
-          <div>
-            <span className="block text-sm font-semibold">{leaveBalance.planned}</span>
-            <span className="text-xs text-slate-500">Planned</span>
-          </div>
-          <div>
-            <span className="block text-sm font-semibold text-teal-500">{leaveBalance.remaining}</span>
-            <span className="text-xs text-slate-500">Left</span>
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-slate-600 mb-1">Used</span>
+            <span className="text-lg font-semibold">{leaveBalance.planned}</span>
           </div>
         </div>
       </div>
       
-      {/* Actions (without Suggest Leave) */}
+      {/* Paint Brush Legend for Marking */}
       <div className="px-2 py-4 border-b border-slate-300">
-        <h3 className={`px-2 mb-2 text-xs font-medium text-slate-500 uppercase ${isCollapsed ? 'sr-only' : ''}`}>
-          Actions
-        </h3>
-        
-        <button 
-          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-md hover:bg-slate-100 text-left mb-1 transition-colors"
-          onClick={handleAddLeave}
-        >
-          <PlusCircle size={20} className="text-teal-500 min-w-5" />
-          {!isCollapsed && <span className="font-medium">Add Planned Leave</span>}
-        </button>
-        
-        <button className="w-full flex items-center gap-3 px-2 py-2.5 rounded-md hover:bg-slate-100 text-left mb-1 transition-colors">
-          <Clock size={20} className="text-red-500 min-w-5" />
-          {!isCollapsed && <span className="font-medium">Mark Busy Period</span>}
-        </button>
-        
-        <button className="w-full flex items-center gap-3 px-2 py-2.5 rounded-md hover:bg-slate-100 text-left mb-1 transition-colors">
-          <Zap size={20} className="text-green-500 min-w-5" />
-          {!isCollapsed && <span className="font-medium">Mark Slow Period</span>}
-        </button>
+        <h3 className="px-2 mb-2 text-xs font-medium text-slate-500 uppercase">Marking Brushes</h3>
+        <div className="flex flex-col gap-2">
+          {brushTypes.map((brush) => (
+            <button
+              key={brush.type}
+              className={`flex items-center gap-2 rounded-lg px-2 py-1 transition-all ${selectedBrush === brush.type ? 'ring-2 ring-offset-2 ring-teal-400 bg-slate-50' : 'hover:bg-slate-100'}`}
+              title={brush.label}
+              onClick={() => setSelectedBrush(selectedBrush === brush.type ? null : brush.type)}
+              type="button"
+            >
+              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${brush.bg}`}>
+                <Paintbrush size={18} className={brush.color} />
+              </span>
+              <span className="text-xs font-medium whitespace-nowrap">Mark {brush.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
       
       {/* Leave Suggestions (Preferences, Button, List) */}

@@ -3,22 +3,28 @@ import { EventType, DayProps } from '../../types';
 
 interface DayWithOffProps extends DayProps {
   offDays?: number[];
+  isDragSelected?: boolean;
+  onMouseDown?: () => void;
+  onMouseEnter?: () => void;
+  onMouseUp?: () => void;
 }
 
 export const Day: React.FC<DayWithOffProps> = ({ 
   day, 
   offDays = [0, 6],
-  onClick,
-  onDragOver,
-  onDrop
+  isDragSelected = false,
+  onMouseDown,
+  onMouseEnter,
+  onMouseUp
 }) => {
   const { date, isCurrentMonth, isWeekend, isToday, events } = day;
   
   const dayClasses = [
-    'min-h-[32px] p-1 border-b border-r border-slate-300 transition-colors',
+    'min-h-[32px] p-1 border-b border-r border-slate-300 transition-colors select-none',
     isCurrentMonth ? 'bg-white' : 'bg-slate-50 text-slate-400',
     isWeekend ? 'bg-slate-100' : '',
     isToday ? 'ring-2 ring-inset ring-teal-500' : '',
+    isDragSelected ? 'ring-2 ring-blue-400 z-20' : '',
     'hover:bg-slate-50'
   ].join(' ');
   
@@ -26,6 +32,7 @@ export const Day: React.FC<DayWithOffProps> = ({
     const specialEvent = events.find(event => 
       event.type === EventType.HOLIDAY || 
       event.type === EventType.OPTIONAL_HOLIDAY ||
+      event.type === EventType.PLANNED_LEAVE ||
       event.type === EventType.BUSY_PERIOD ||
       event.type === EventType.SLOW_PERIOD
     );
@@ -34,13 +41,15 @@ export const Day: React.FC<DayWithOffProps> = ({
     
     switch (specialEvent.type) {
       case EventType.HOLIDAY:
-        return <div className="absolute inset-0 bg-indigo-100 opacity-60 pointer-events-none" />;
+        return <div className="absolute inset-0 bg-blue-100 opacity-60 pointer-events-none" />;
       case EventType.OPTIONAL_HOLIDAY:
-        return <div className="absolute inset-0 bg-purple-100 opacity-60 pointer-events-none" />;
+        return <div className="absolute inset-0 bg-yellow-100 opacity-60 pointer-events-none" />;
+      case EventType.PLANNED_LEAVE:
+        return <div className="absolute inset-0 bg-teal-100 opacity-60 pointer-events-none" />;
       case EventType.BUSY_PERIOD:
         return <div className="absolute inset-0 bg-red-100 opacity-60 pointer-events-none" />;
       case EventType.SLOW_PERIOD:
-        return <div className="absolute inset-0 bg-green-100 opacity-60 pointer-events-none" />;
+        return <div className="absolute inset-0 bg-amber-100 opacity-60 pointer-events-none" />;
       default:
         return null;
     }
@@ -51,9 +60,9 @@ export const Day: React.FC<DayWithOffProps> = ({
   return (
     <div 
       className={dayClasses}
-      onClick={onClick}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
+      onMouseUp={onMouseUp}
     >
       <div className="relative h-full">
         {getSpecialBackground()}

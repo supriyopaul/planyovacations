@@ -29,10 +29,10 @@ const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
 export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>({
-    total: 20,
-    used: 5,
-    planned: 8,
-    remaining: 12
+    total: 25,
+    used: 0,
+    planned: 0,
+    remaining: 25
   });
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [calendarView, setCalendarView] = useState<CalendarView>('year');
@@ -41,12 +41,6 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const mockData = generateMockData();
-    setEvents(mockData.events);
-    setLeaveBalance(mockData.leaveBalance);
-  }, []);
 
   // Set default start and end date to this year's start and end on initial load
   useEffect(() => {
