@@ -1,8 +1,13 @@
 import React from 'react';
 import { EventType, DayProps } from '../../types';
 
-export const Day: React.FC<DayProps> = ({ 
+interface DayWithOffProps extends DayProps {
+  offDays?: number[];
+}
+
+export const Day: React.FC<DayWithOffProps> = ({ 
   day, 
+  offDays = [0, 6],
   onClick,
   onDragOver,
   onDrop
@@ -41,6 +46,8 @@ export const Day: React.FC<DayProps> = ({
     }
   };
 
+  const isOffDay = offDays.includes(date.getDay());
+
   return (
     <div 
       className={dayClasses}
@@ -52,7 +59,7 @@ export const Day: React.FC<DayProps> = ({
         {getSpecialBackground()}
         
         <div className="flex justify-between items-start relative z-10">
-          <span className="text-xs font-medium">{date.getDate()}</span>
+          <span className={`text-xs font-medium ${isOffDay ? 'text-slate-400' : ''}`}>{date.getDate()}</span>
           
           {events.length > 0 && (
             <span className="text-[10px] font-medium bg-slate-200 rounded-full h-4 w-4 flex items-center justify-center">

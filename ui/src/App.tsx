@@ -6,6 +6,7 @@ import './index.css';
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [offDays, setOffDays] = useState<number[]>([0, 6]);
 
   return (
     <LeaveProvider>
@@ -13,10 +14,11 @@ function App() {
         <Sidebar 
           isCollapsed={isSidebarCollapsed} 
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          setOffDays={setOffDays}
         />
         
         <main className="flex-1 flex flex-col overflow-hidden">
-          <Calendar />
+          <Calendar offDays={offDays} />
         </main>
       </div>
     </LeaveProvider>

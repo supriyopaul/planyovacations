@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu, X, PlusCircle, Clock, Zap, Import, Import as Export, Settings, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarProps } from '../../types';
 import { useLeave } from '../../context/LeaveContext';
 import { LeavePreferenceSlider } from '../QuickActions/LeavePreferenceSlider';
 import { SuggestedLeaveList } from '../QuickActions/SuggestedLeaveList';
+import { WeekendMarker } from '../WeekendMarker';
 
 // Utility to format date for input type=date
 const formatDateInput = (date: Date | null) =>
   date ? date.toISOString().split('T')[0] : '';
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+interface SidebarWithOffDaysProps extends SidebarProps {
+  setOffDays: (offDays: number[]) => void;
+}
+
+export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onToggleCollapse, setOffDays }) => {
   const {
     setIsCreatingEvent,
     calendarView,
@@ -106,6 +111,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
             <label htmlFor="endDate" className="block text-xs text-slate-600">End Date</label>
             <input type="date" id="endDate" name="endDate" value={formatDateInput(endDate)} onChange={handleDateRangeChange} className="mt-1 px-2 py-1 border border-slate-300 rounded text-sm w-full" />
           </div>
+        </div>
+        <div className="mt-4">
+          <WeekendMarker onChange={setOffDays} />
         </div>
       </div>
       

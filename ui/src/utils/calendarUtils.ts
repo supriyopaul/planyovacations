@@ -5,13 +5,16 @@ export const getDaysInMonth = (year: number, month: number): Date[] => {
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
   
-  // Get days from previous month to fill first week
-  const firstDayOfWeek = firstDayOfMonth.getDay();
+  // getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
+  // We want weeks to start on Monday (1) and end on Sunday (0)
+  let firstDayOfWeek = firstDayOfMonth.getDay();
+  if (firstDayOfWeek === 0) firstDayOfWeek = 7; // treat Sunday as 7 for Monday-start
   const prevMonth = new Date(year, month, 0);
   const daysInPrevMonth = prevMonth.getDate();
   
-  for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-    days.push(new Date(year, month - 1, daysInPrevMonth - i));
+  // Fill days from previous month to start on Monday
+  for (let i = firstDayOfWeek - 1; i > 0; i--) {
+    days.push(new Date(year, month - 1, daysInPrevMonth - i + 1));
   }
   
   // Get days in current month
@@ -19,11 +22,11 @@ export const getDaysInMonth = (year: number, month: number): Date[] => {
     days.push(new Date(year, month, i));
   }
   
-  // Get days from next month to complete the calendar grid
-  const lastDayOfWeek = lastDayOfMonth.getDay();
-  const daysToAdd = 6 - lastDayOfWeek;
-  
-  for (let i = 1; i <= daysToAdd; i++) {
+  // Fill days from next month to complete the last week (end on Sunday)
+  let lastDayOfWeek = lastDayOfMonth.getDay();
+  if (lastDayOfWeek === 0) lastDayOfWeek = 7;
+  const daysToAdd = 7 - lastDayOfWeek;
+  for (let i = 1; i <= daysToAdd && daysToAdd < 7; i++) {
     days.push(new Date(year, month + 1, i));
   }
   

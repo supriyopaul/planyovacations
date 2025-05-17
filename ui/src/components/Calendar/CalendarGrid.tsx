@@ -7,6 +7,7 @@ import { CalendarGridProps } from '../../types';
 interface CalendarGridWithRangeProps extends CalendarGridProps {
   startDate?: Date | null;
   endDate?: Date | null;
+  offDays?: number[];
 }
 
 function getMonthsInRange(start: Date, end: Date) {
@@ -20,7 +21,7 @@ function getMonthsInRange(start: Date, end: Date) {
   return months;
 }
 
-export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate, view, startDate, endDate }) => {
+export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate, view, startDate, endDate, offDays = [0, 6] }) => {
   const { events, setIsCreatingEvent, activeEventId, setActiveEventId } = useLeave();
   
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -77,7 +78,8 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
                 {monthDays.map((day, dayIndex) => (
                   <Day 
                     key={dayIndex}
-                    day={{...day, events: day.events}}
+                    day={{...day, events: []}}
+                    offDays={offDays}
                     onClick={handleDayClick}
                     onDragStart={(e) => day.events.length && handleDragStart(e, day.events[0].id)}
                     onDragOver={handleDragOver}
@@ -111,7 +113,8 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
         {calendarDays.map((day, index) => (
           <Day 
             key={index} 
-            day={day}
+            day={{...day, events: []}}
+            offDays={offDays}
             onClick={handleDayClick}
             onDragStart={(e) => day.events.length && handleDragStart(e, day.events[0].id)}
             onDragOver={handleDragOver}
