@@ -73,6 +73,18 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const deleteEvent = (id: string) => {
+    const eventToDelete = events.find(event => event.id === id);
+    if (eventToDelete && eventToDelete.type === EventType.PLANNED_LEAVE) {
+      const start = new Date(eventToDelete.startDate);
+      const end = new Date(eventToDelete.endDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      setLeaveBalance(prev => ({
+        ...prev,
+        planned: Math.max(0, prev.planned - diffDays),
+        remaining: prev.remaining + diffDays
+      }));
+    }
     setEvents(events.filter(event => event.id !== id));
   };
 
