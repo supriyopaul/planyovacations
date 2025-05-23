@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Paintbrush, Import, Import as Export, Settings, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, X, Paintbrush, Import, Import as Export, Settings, Calendar, ChevronLeft, ChevronRight, Eraser as EraserIcon } from 'lucide-react';
 import { SidebarProps } from '../../types';
 import { useLeave } from '../../context/LeaveContext';
 import { LeavePreferenceSlider } from '../QuickActions/LeavePreferenceSlider';
@@ -47,6 +47,12 @@ const brushTypes = [
     label: 'Slow Work Period',
     color: 'text-amber-700',
     bg: 'bg-amber-100',
+  },
+  {
+    type: 'eraser',
+    label: 'Eraser',
+    color: 'text-slate-500',
+    bg: 'bg-slate-200',
   },
 ];
 
@@ -181,9 +187,13 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
               type="button"
             >
               <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${brush.bg}`}>
-                <Paintbrush size={18} className={brush.color} />
+                {brush.type === 'eraser' ? (
+                  <EraserIcon size={18} className={brush.color} />
+                ) : (
+                  <Paintbrush size={18} className={brush.color} />
+                )}
               </span>
-              <span className="text-xs font-medium whitespace-nowrap">Mark {brush.label}</span>
+              <span className="text-xs font-medium whitespace-nowrap">{brush.type === 'eraser' ? brush.label : `Mark ${brush.label}`}</span>
             </button>
           ))}
         </div>

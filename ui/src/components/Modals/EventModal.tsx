@@ -81,39 +81,13 @@ export const EventModal: React.FC<EventModalProps> = ({ open, onClose, eventType
       };
       updateEvent(activeEventId, eventData);
     } else {
+      // Use props for new event
       if (!eventType || !startDate || !endDate) return;
-      // Merge/extend logic: repeatedly expand window to include all overlapping/adjacent events
-      let mergedStart = startDate;
-      let mergedEnd = endDate;
-      let toDelete = new Set();
-      let changed = true;
-      while (changed) {
-        changed = false;
-        events.forEach(ev => {
-          if (ev.type === eventType) {
-            const evStart = new Date(ev.startDate);
-            const evEnd = new Date(ev.endDate);
-            // Overlaps or adjacent
-            if (
-              (mergedStart <= evEnd && mergedEnd >= evStart) ||
-              (Math.abs(evStart.getTime() - mergedEnd.getTime()) === 86400000) ||
-              (Math.abs(mergedStart.getTime() - evEnd.getTime()) === 86400000)
-            ) {
-              if (evStart < mergedStart) { mergedStart = evStart; changed = true; }
-              if (evEnd > mergedEnd) { mergedEnd = evEnd; changed = true; }
-              toDelete.add(ev.id);
-            }
-          }
-        });
-      }
-      // Delete all merged events
-      toDelete.forEach(id => deleteEvent(id));
-      // Add the merged event
       const eventData = {
         title: formData.title,
         description: '',
-        startDate: mergedStart,
-        endDate: mergedEnd,
+        startDate,
+        endDate,
         type: eventType
       };
       addEvent(eventData);

@@ -58,35 +58,15 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
       setDragging(false);
       const rangeStart = dragStart < date ? dragStart : date;
       const rangeEnd = dragStart > date ? dragStart : date;
-      if (selectedBrush) {
-        // Get all dates in the range
-        const datesInRange: Date[] = [];
-        let d = new Date(rangeStart);
-        while (d <= rangeEnd) {
-          datesInRange.push(new Date(d));
-          d.setDate(d.getDate() + 1);
-        }
-        // Check if all dates are already marked with selectedBrush
-        const allMarked = datesInRange.every(dayDate =>
-          events.some(ev =>
-            ev.type === selectedBrush &&
-            dayDate >= new Date(ev.startDate) &&
-            dayDate <= new Date(ev.endDate)
-          )
+      if (selectedBrush === 'eraser') {
+        // Delete all events in the selected range
+        const eventsToDelete = events.filter(ev =>
+          new Date(ev.startDate) <= rangeEnd && new Date(ev.endDate) >= rangeStart
         );
-        if (allMarked) {
-          // Find all events of this type that overlap with the range and delete them
-          const eventsToDelete = events.filter(ev =>
-            ev.type === selectedBrush &&
-            (
-              (new Date(ev.startDate) <= rangeEnd && new Date(ev.endDate) >= rangeStart)
-            )
-          );
-          eventsToDelete.forEach(ev => deleteEvent(ev.id));
-          return; // Do not open modal
-        }
+        eventsToDelete.forEach(ev => deleteEvent(ev.id));
+        return;
       }
-      // Open modal for event creation with selectedBrush, dragStart, dragEnd
+      // For other brushes, open modal for marking
       setModalRange({
         start: rangeStart,
         end: rangeEnd
