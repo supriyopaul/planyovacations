@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Day } from './Day';
 import { useLeave } from '../../context/LeaveContext';
 import { getCalendarDays, isSameDay } from '../../utils/calendarUtils';
-import { CalendarGridProps, EventType } from '../../types';
-import { EventModal } from '../Modals/EventModal';
+import { CalendarGridProps, EventType, CalendarView } from '../../types';
+import { EventCreationModal } from '../Modals/EventCreationModal';
 
-interface CalendarGridWithRangeProps extends CalendarGridProps {
-  startDate?: Date | null;
-  endDate?: Date | null;
-  offDays?: number[];
-  selectedBrush: EventType | null;
-  setSelectedBrush: (brush: EventType | null) => void;
+interface DragState {
+  isDragging: boolean;
+  startDate: Date | null;
+  endDate: Date | null;
+  initialDate: Date | null;
 }
 
 function getMonthsInRange(start: Date, end: Date) {
@@ -24,61 +23,118 @@ function getMonthsInRange(start: Date, end: Date) {
   return months;
 }
 
-export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate, view, startDate, endDate, offDays = [0, 6], selectedBrush, setSelectedBrush }) => {
-  const { events, setIsCreatingEvent, activeEventId, setActiveEventId, deleteEvent } = useLeave();
+export const CalendarGrid: React.FC<CalendarGridProps> = ({
+  currentDate,
+  view = 'year',
+  startDate,
+  endDate,
+  offDays = [0, 6],
+  selectedBrush,
+  setSelectedBrush
+}) => {
+  const { events, addEvent } = useLeave();
   
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   
-  // Drag-to-mark state
-  const [dragStart, setDragStart] = React.useState<Date | null>(null);
-  const [dragEnd, setDragEnd] = React.useState<Date | null>(null);
-  const [dragging, setDragging] = React.useState(false);
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    startDate: null,
+    endDate: null,
+    initialDate: null
+  });
 
-  // Helper: is date in drag range
-  const isInDragRange = (date: Date) => {
-    if (!dragStart || !dragEnd) return false;
-    const start = dragStart < dragEnd ? dragStart : dragEnd;
-    const end = dragStart > dragEnd ? dragStart : dragEnd;
-    return date >= start && date <= end;
-  };
+  const isDateInRange = useCallback((date: Date) => {
+    if (!dragState.startDate || !dragState.endDate) return false;
+    
+    const start = new Date(Math.min(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    const end = new Date(Math.max(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    
+    // Normalize dates to start of day for comparison
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    return checkDate >= start && checkDate <= end;
+  }, [dragState.startDate, dragState.endDate]);
 
-  // Mouse event handlers for drag-to-mark
-  const handleDayMouseDown = (date: Date) => {
+  const isRangeStart = useCallback((date: Date) => {
+    if (!dragState.startDate || !dragState.endDate) return false;
+    const start = new Date(Math.min(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    return date.getTime() === start.getTime();
+  }, [dragState.startDate, dragState.endDate]);
+
+  const isRangeEnd = useCallback((date: Date) => {
+    if (!dragState.startDate || !dragState.endDate) return false;
+    const end = new Date(Math.max(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    return date.getTime() === end.getTime();
+  }, [dragState.startDate, dragState.endDate]);
+
+  const handleMouseDown = useCallback((date: Date) => {
     if (!selectedBrush) return;
-    setDragStart(date);
-    setDragEnd(date);
-    setDragging(true);
-  };
-  const handleDayMouseEnter = (date: Date) => {
-    if (dragging) setDragEnd(date);
-  };
-  const handleDayMouseUp = (date: Date) => {
-    if (dragging && dragStart) {
-      setDragEnd(date);
-      setDragging(false);
-      const rangeStart = dragStart < date ? dragStart : date;
-      const rangeEnd = dragStart > date ? dragStart : date;
-      if (selectedBrush === 'eraser') {
-        // Delete all events in the selected range
-        const eventsToDelete = events.filter(ev =>
-          new Date(ev.startDate) <= rangeEnd && new Date(ev.endDate) >= rangeStart
-        );
-        eventsToDelete.forEach(ev => deleteEvent(ev.id));
-        return;
-      }
-      // For other brushes, open modal for marking
-      setModalRange({
-        start: rangeStart,
-        end: rangeEnd
+    
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
+    setDragState({
+      isDragging: true,
+      startDate: normalizedDate,
+      endDate: normalizedDate,
+      initialDate: normalizedDate
+    });
+  }, [selectedBrush]);
+
+  const handleMouseEnter = useCallback((date: Date) => {
+    if (!dragState.isDragging || !dragState.initialDate) return;
+    
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0);
+    
+    setDragState(prev => ({
+      ...prev,
+      startDate: prev.initialDate,
+      endDate: normalizedDate
+    }));
+  }, [dragState.isDragging, dragState.initialDate]);
+
+  const handleMouseUp = useCallback(() => {
+    if (!dragState.isDragging || !dragState.startDate || !dragState.endDate || !selectedBrush) return;
+    
+    // Don't show modal for eraser
+    if (selectedBrush === EventType.ERASER) {
+      // Handle eraser logic here
+      setDragState({
+        isDragging: false,
+        startDate: null,
+        endDate: null,
+        initialDate: null
       });
-      setModalType(selectedBrush);
-      setShowModal(true);
+      return;
     }
-  };
-  React.useEffect(() => {
-    if (!dragging) setDragStart(null);
-  }, [dragging]);
-  
+
+    // Get the actual start and end dates (ordered)
+    const start = new Date(Math.min(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    const end = new Date(Math.max(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    // Show the event creation modal
+    setModalData({
+      type: selectedBrush,
+      startDate: start,
+      endDate: end
+    });
+    setShowEventModal(true);
+
+    // Clear the drag state
+    setDragState({
+      isDragging: false,
+      startDate: null,
+      endDate: null,
+      initialDate: null
+    });
+  }, [dragState.isDragging, dragState.startDate, dragState.endDate, selectedBrush]);
+
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('eventId', id);
   };
@@ -93,16 +149,41 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
     console.log(`Event ${eventId} dropped on ${date.toISOString()}`);
   };
 
-  // Modal state for event creation after drag
-  const [showModal, setShowModal] = React.useState(false);
-  const [modalRange, setModalRange] = React.useState<{start: Date, end: Date} | null>(null);
-  const [modalType, setModalType] = React.useState<EventType | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [modalData, setModalData] = useState<{
+    type: EventType;
+    startDate: Date;
+    endDate: Date;
+  } | null>(null);
 
-  // Modal close handler
-  const handleModalClose = () => {
-    setShowModal(false);
-    setModalRange(null);
-    setModalType(null);
+  const handleEventCreate = (data: { title: string; type: EventType; startDate: Date; endDate: Date }) => {
+    addEvent({
+      title: data.title,
+      type: data.type,
+      startDate: data.startDate,
+      endDate: data.endDate
+    });
+
+    setShowEventModal(false);
+    setModalData(null);
+  };
+
+  const handleEventModalClose = () => {
+    setShowEventModal(false);
+    setModalData(null);
+  };
+
+  const getGridRowsClass = (view: CalendarView) => {
+    switch (view) {
+      case 'year':
+        return 'grid-rows-6';
+      case 'week':
+        return 'grid-rows-1';
+      case 'month':
+        return 'grid-rows-6';
+      default:
+        return '';
+    }
   };
 
   if (view === 'year') {
@@ -138,10 +219,14 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
                       key={dayIndex}
                       day={day}
                       offDays={offDays}
-                      isDragSelected={isInDragRange(day.date)}
-                      onMouseDown={() => handleDayMouseDown(day.date)}
-                      onMouseEnter={() => handleDayMouseEnter(day.date)}
-                      onMouseUp={() => handleDayMouseUp(day.date)}
+                      isDragSelected={isDateInRange(day.date)}
+                      isRangeStart={isRangeStart(day.date)}
+                      isRangeEnd={isRangeEnd(day.date)}
+                      isInRange={isDateInRange(day.date)}
+                      onMouseDown={() => handleMouseDown(day.date)}
+                      onMouseEnter={() => handleMouseEnter(day.date)}
+                      onMouseUp={handleMouseUp}
+                      selectedBrush={selectedBrush}
                     />
                   ))}
                 </div>
@@ -149,13 +234,14 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
             );
           })}
         </div>
-        {showModal && modalRange && modalType && (
-          <EventModal 
-            open={showModal}
-            onClose={handleModalClose}
-            eventType={modalType}
-            startDate={modalRange.start}
-            endDate={modalRange.end}
+        {showEventModal && modalData && (
+          <EventCreationModal
+            open={showEventModal}
+            onClose={handleEventModalClose}
+            onSubmit={handleEventCreate}
+            eventType={modalData.type}
+            startDate={modalData.startDate}
+            endDate={modalData.endDate}
           />
         )}
       </>
@@ -178,27 +264,32 @@ export const CalendarGrid: React.FC<CalendarGridWithRangeProps> = ({ currentDate
           ))}
         </div>
         
-        <div className={`grid grid-cols-7 ${view === 'month' ? 'grid-rows-6' : 'grid-rows-1'}`}>
+        <div className={`grid grid-cols-7 ${getGridRowsClass(view)}`}>
           {calendarDays.map((day, index) => (
             <Day 
               key={index} 
               day={day}
               offDays={offDays}
-              isDragSelected={isInDragRange(day.date)}
-              onMouseDown={() => handleDayMouseDown(day.date)}
-              onMouseEnter={() => handleDayMouseEnter(day.date)}
-              onMouseUp={() => handleDayMouseUp(day.date)}
+              isDragSelected={dragState.isDragging && day.date.getTime() === dragState.endDate?.getTime()}
+              isRangeStart={isRangeStart(day.date)}
+              isRangeEnd={isRangeEnd(day.date)}
+              isInRange={isDateInRange(day.date)}
+              onMouseDown={() => handleMouseDown(day.date)}
+              onMouseEnter={() => handleMouseEnter(day.date)}
+              onMouseUp={handleMouseUp}
+              selectedBrush={selectedBrush}
             />
           ))}
         </div>
       </div>
-      {showModal && modalRange && modalType && (
-        <EventModal 
-          open={showModal}
-          onClose={handleModalClose}
-          eventType={modalType}
-          startDate={modalRange.start}
-          endDate={modalRange.end}
+      {showEventModal && modalData && (
+        <EventCreationModal
+          open={showEventModal}
+          onClose={handleEventModalClose}
+          onSubmit={handleEventCreate}
+          eventType={modalData.type}
+          startDate={modalData.startDate}
+          endDate={modalData.endDate}
         />
       )}
     </>

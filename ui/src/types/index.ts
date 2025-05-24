@@ -4,7 +4,8 @@ export enum EventType {
   PLANNED_LEAVE = 'planned_leave',
   BUSY_PERIOD = 'busy_period',
   SLOW_PERIOD = 'slow_period',
-  SUGGESTED_LEAVE = 'suggested_leave'
+  SUGGESTED_LEAVE = 'suggested_leave',
+  ERASER = 'eraser'
 }
 
 export interface LeaveEvent {
@@ -23,7 +24,7 @@ export interface LeaveBalance {
   remaining: number;
 }
 
-export type CalendarView = 'year' | 'week';
+export type CalendarView = 'year' | 'week' | 'month';
 
 export interface CalendarDay {
   date: Date;
@@ -45,8 +46,11 @@ export interface DayProps {
 export interface CalendarGridProps {
   currentDate: Date;
   view: CalendarView;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  offDays?: number[];
+  selectedBrush?: EventType | null;
+  setSelectedBrush?: (brush: EventType | null) => void;
 }
 
 export interface SidebarProps {

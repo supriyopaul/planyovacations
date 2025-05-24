@@ -23,36 +23,54 @@ const brushTypes = [
     label: 'Public Holiday',
     color: 'text-blue-600',
     bg: 'bg-blue-100',
+    hoverBg: 'hover:bg-blue-50',
+    activeBg: 'bg-blue-50',
+    ring: 'ring-blue-400'
   },
   {
     type: EventType.OPTIONAL_HOLIDAY,
     label: 'Optional Holiday',
     color: 'text-yellow-700',
     bg: 'bg-yellow-100',
+    hoverBg: 'hover:bg-yellow-50',
+    activeBg: 'bg-yellow-50',
+    ring: 'ring-yellow-400'
   },
   {
     type: EventType.PLANNED_LEAVE,
     label: 'Planned Leave',
     color: 'text-teal-600',
     bg: 'bg-teal-100',
+    hoverBg: 'hover:bg-teal-50',
+    activeBg: 'bg-teal-50',
+    ring: 'ring-teal-400'
   },
   {
     type: EventType.BUSY_PERIOD,
     label: 'Busy Work Period',
     color: 'text-red-600',
     bg: 'bg-red-100',
+    hoverBg: 'hover:bg-red-50',
+    activeBg: 'bg-red-50',
+    ring: 'ring-red-400'
   },
   {
     type: EventType.SLOW_PERIOD,
     label: 'Slow Work Period',
-    color: 'text-amber-700',
-    bg: 'bg-amber-100',
+    color: 'text-orange-600',
+    bg: 'bg-orange-100',
+    hoverBg: 'hover:bg-orange-50',
+    activeBg: 'bg-orange-50',
+    ring: 'ring-orange-400'
   },
   {
-    type: 'eraser',
+    type: EventType.ERASER,
     label: 'Eraser',
     color: 'text-slate-500',
     bg: 'bg-slate-200',
+    hoverBg: 'hover:bg-slate-50',
+    activeBg: 'bg-slate-50',
+    ring: 'ring-slate-400'
   },
 ];
 
@@ -181,19 +199,34 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
           {brushTypes.map((brush) => (
             <button
               key={brush.type}
-              className={`flex items-center gap-2 rounded-lg px-2 py-1 transition-all ${selectedBrush === brush.type ? 'ring-2 ring-offset-2 ring-teal-400 bg-slate-50' : 'hover:bg-slate-100'}`}
+              className={`
+                flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all
+                ${selectedBrush === brush.type 
+                  ? `ring-2 ring-offset-2 ${brush.ring} ${brush.activeBg} shadow-sm` 
+                  : 'hover:bg-slate-50 hover:shadow-sm'
+                }
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:${brush.ring}
+              `}
               title={brush.label}
-              onClick={() => setSelectedBrush(selectedBrush === brush.type ? null : brush.type)}
+              onClick={() => {
+                if (selectedBrush === brush.type) {
+                  setSelectedBrush(null);
+                } else {
+                  setSelectedBrush(brush.type);
+                }
+              }}
               type="button"
             >
-              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${brush.bg}`}>
-                {brush.type === 'eraser' ? (
+              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${brush.bg} transition-colors ${selectedBrush === brush.type ? brush.activeBg : ''}`}>
+                {brush.type === EventType.ERASER ? (
                   <EraserIcon size={18} className={brush.color} />
                 ) : (
                   <Paintbrush size={18} className={brush.color} />
                 )}
               </span>
-              <span className="text-xs font-medium whitespace-nowrap">{brush.type === 'eraser' ? brush.label : `Mark ${brush.label}`}</span>
+              <span className={`text-xs font-medium whitespace-nowrap ${selectedBrush === brush.type ? 'font-semibold' : ''}`}>
+                {brush.type === EventType.ERASER ? brush.label : `Mark ${brush.label}`}
+              </span>
             </button>
           ))}
         </div>
