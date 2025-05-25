@@ -44,11 +44,12 @@ const doDatesOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boo
 // Helper function to get overlapping events
 const getOverlappingEvents = (events: LeaveEvent[], startDate: Date, endDate: Date, type: EventType): LeaveEvent[] => {
   return events.filter(event => {
-    // Only consider holiday types for mutual exclusivity
-    if (event.type !== EventType.HOLIDAY && event.type !== EventType.OPTIONAL_HOLIDAY) {
-      return false;
+    // Consider both holiday types and work period types for mutual exclusivity
+    if ((event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY) ||
+        (event.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD)) {
+      return doDatesOverlap(event.startDate, event.endDate, startDate, endDate);
     }
-    return doDatesOverlap(event.startDate, event.endDate, startDate, endDate);
+    return false;
   });
 };
 
@@ -104,6 +105,25 @@ const handleHolidayConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEvent
   return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
 };
 
+// Helper function to handle work period type conversion
+const handleWorkPeriodConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEvent, 'id'>): LeaveEvent[] => {
+  // Get all overlapping work period events
+  const overlappingEvents = events.filter(event => 
+    (event.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD) &&
+    doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
+  );
+
+  if (overlappingEvents.length === 0) {
+    return [...events, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
+  }
+
+  // Remove all overlapping work period events
+  const remainingEvents = events.filter(e => !overlappingEvents.includes(e));
+
+  // Add the new event
+  return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
+};
+
 export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>({
@@ -144,7 +164,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       endDate: end
     };
 
-    // For holiday types, handle merging and conversion
+    // Handle different event types
     if (event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY) {
       // If there are any overlapping events of different holiday types, handle conversion
       const hasDifferentTypeOverlap = events.some(e => 
@@ -159,8 +179,22 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // Merge with same type events
         setEvents(mergeSameTypeEvents(events, normalizedEvent, event.type));
       }
+    } else if (event.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD) {
+      // If there are any overlapping events of different work period types, handle conversion
+      const hasDifferentTypeOverlap = events.some(e => 
+        (e.type === EventType.BUSY_PERIOD || e.type === EventType.SLOW_PERIOD) &&
+        e.type !== event.type &&
+        doDatesOverlap(e.startDate, e.endDate, start, end)
+      );
+
+      if (hasDifferentTypeOverlap) {
+        setEvents(handleWorkPeriodConversion(events, normalizedEvent));
+      } else {
+        // Merge with same type events
+        setEvents(mergeSameTypeEvents(events, normalizedEvent, event.type));
+      }
     } else {
-      // For non-holiday types, add as normal
+      // For other types (e.g., PLANNED_LEAVE), add as normal
       const newEvent = {
         ...normalizedEvent,
         id: Math.random().toString(36).substr(2, 9)

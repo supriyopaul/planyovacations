@@ -227,6 +227,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onMouseEnter={() => handleMouseEnter(day.date)}
                       onMouseUp={handleMouseUp}
                       selectedBrush={selectedBrush}
+                      columnIndex={dayIndex % 7}
+                      daysInWeek={7}
                     />
                   ))}
                 </div>
@@ -278,6 +280,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               onMouseEnter={() => handleMouseEnter(day.date)}
               onMouseUp={handleMouseUp}
               selectedBrush={selectedBrush}
+              columnIndex={index % 7}
+              daysInWeek={7}
             />
           ))}
         </div>

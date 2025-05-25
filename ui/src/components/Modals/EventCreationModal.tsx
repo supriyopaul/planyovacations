@@ -33,11 +33,25 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
     
-    // Check for overlapping holiday events
+    // Check for overlapping events based on type
     const overlapping = events.filter(event => {
+      // For holiday types
+      if (eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY) {
       if (event.type !== EventType.HOLIDAY && event.type !== EventType.OPTIONAL_HOLIDAY) {
+          return false;
+        }
+      }
+      // For work period types
+      else if (eventType === EventType.BUSY_PERIOD || eventType === EventType.SLOW_PERIOD) {
+        if (event.type !== EventType.BUSY_PERIOD && event.type !== EventType.SLOW_PERIOD) {
+          return false;
+        }
+      }
+      // For other types, no overlap handling needed
+      else {
         return false;
       }
+
       const eventStart = new Date(event.startDate);
       const eventEnd = new Date(event.endDate);
       eventStart.setHours(0, 0, 0, 0);
@@ -45,7 +59,7 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
       return (start <= eventEnd && eventStart <= end);
     });
 
-    // If there are overlapping events of different holiday types, show conversion prompt
+    // If there are overlapping events of different types, show conversion prompt
     if (overlapping.length > 0 && overlapping.some(e => e.type !== eventType)) {
       setShowConversionPrompt(true);
     } else {
@@ -119,29 +133,43 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {showConversionPrompt ? 'Convert Holiday Type' : 'Create New Event'}
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          {showConversionPrompt ? 'Convert Event Type' : 'Create New Event'}
           </h2>
-          <button
-            onClick={handleCancel}
-            className="text-slate-400 hover:text-slate-500 focus:outline-none"
-          >
-            <X size={20} />
-          </button>
+        
+        <form onSubmit={handleSubmit}>
+          {/* Title input */}
+          <div className="mb-4">
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-md border-slate-300 shadow-sm focus:border-teal-500 focus:ring focus:ring-teal-200 focus:ring-opacity-50"
+              placeholder="Enter event title..."
+              required
+            />
+            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+          </div>
+
+          {/* Date range display */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Date Range
+            </label>
+            <div className="text-sm text-slate-600">
+              {formatDate(displayStartDate)} - {formatDate(displayEndDate)}
+            </div>
         </div>
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-4">
-          {showConversionPrompt ? (
+          {/* Conversion prompt */}
+          {showConversionPrompt && (
             <>
-              <div className="mb-4 p-3 bg-amber-50 rounded-lg">
-                <p className="text-sm text-amber-700">
-                  There are existing holiday events in this date range. Please choose how to handle this:
-                </p>
-              </div>
+              {eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY ? (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Select Holiday Type
@@ -175,8 +203,46 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
                   </label>
                 </div>
               </div>
+              ) : eventType === EventType.BUSY_PERIOD || eventType === EventType.SLOW_PERIOD ? (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Select Work Period Type
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="workPeriodType"
+                        value={EventType.BUSY_PERIOD}
+                        checked={selectedType === EventType.BUSY_PERIOD}
+                        onChange={() => setSelectedType(EventType.BUSY_PERIOD)}
+                        className="text-red-600 focus:ring-red-500"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.BUSY_PERIOD)}`}>
+                        Busy Period
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="workPeriodType"
+                        value={EventType.SLOW_PERIOD}
+                        checked={selectedType === EventType.SLOW_PERIOD}
+                        onChange={() => setSelectedType(EventType.SLOW_PERIOD)}
+                        className="text-orange-600 focus:ring-orange-500"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.SLOW_PERIOD)}`}>
+                        Slow Period
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              ) : null}
             </>
-          ) : (
+          )}
+
+          {/* Event type display (when not converting) */}
+          {!showConversionPrompt && (
             <div className="mb-4">
               <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(eventType)}`}>
                 {eventType.replace(/_/g, ' ')}
@@ -184,47 +250,8 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
             </div>
           )}
 
-          {/* Date Range */}
-          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-            <div className="text-sm text-slate-600">
-              <div className="flex justify-between">
-                <span>From:</span>
-                <span className="font-medium">{formatDate(displayStartDate)}</span>
-              </div>
-              <div className="flex justify-between mt-1">
-                <span>To:</span>
-                <span className="font-medium">{formatDate(displayEndDate)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Title Input */}
-          <div className="mb-4">
-            <label htmlFor="event-title" className="block text-sm font-medium text-slate-700 mb-1">
-              Event Title <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="event-title"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                setError('');
-              }}
-              placeholder="Enter event title"
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                error ? 'border-red-300' : 'border-slate-300'
-              }`}
-              autoFocus
-              required
-            />
-            {error && (
-              <p className="mt-1 text-sm text-red-600">{error}</p>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-6">
+          {/* Action buttons */}
+          <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
               onClick={handleCancel}
@@ -236,7 +263,7 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
             >
-              {showConversionPrompt ? 'Convert' : 'Create Event'}
+              {showConversionPrompt ? 'Convert' : 'Create'}
             </button>
           </div>
         </form>

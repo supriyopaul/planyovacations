@@ -12,6 +12,8 @@ interface DayWithOffProps extends DayProps {
   onMouseEnter?: () => void;
   onMouseUp?: () => void;
   selectedBrush?: EventType | null;
+  columnIndex?: number;
+  daysInWeek?: number;
 }
 
 export const Day: React.FC<DayWithOffProps> = ({ 
@@ -24,7 +26,9 @@ export const Day: React.FC<DayWithOffProps> = ({
   onMouseDown,
   onMouseEnter,
   onMouseUp,
-  selectedBrush
+  selectedBrush,
+  columnIndex = 0,
+  daysInWeek = 7
 }) => {
   const { date, isCurrentMonth, isWeekend, isToday, events } = day;
   
@@ -111,6 +115,12 @@ export const Day: React.FC<DayWithOffProps> = ({
 
   const isOffDay = offDays.includes(date.getDay());
 
+  const getTooltipPositionClass = () => {
+    if (columnIndex === 0) return 'left-0 -translate-x-0';
+    if (columnIndex === daysInWeek - 1) return 'right-0 translate-x-0';
+    return 'left-1/2 -translate-x-1/2';
+  };
+
   return (
     <div 
       className={dayClasses}
@@ -129,7 +139,7 @@ export const Day: React.FC<DayWithOffProps> = ({
               <span className="text-[10px] font-medium bg-slate-200 rounded-full h-4 w-4 flex items-center justify-center">
                 {events.length}
               </span>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+              <div className={`absolute bottom-full ${getTooltipPositionClass()} mb-2 hidden group-hover:block z-50`}>
                 <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-2 min-w-[200px] max-w-[300px]">
                   {events.map((event, index) => (
                     <div key={event.id} className={`${index > 0 ? 'mt-1 pt-1 border-t border-slate-100' : ''}`}>
