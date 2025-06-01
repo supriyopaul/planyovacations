@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { Day } from './Day';
 import { useLeave } from '../../context/LeaveContext';
-import { getCalendarDays, isSameDay } from '../../utils/calendarUtils';
-import { CalendarGridProps, EventType, CalendarView } from '../../types';
+import { getCalendarDays, isSameDay, doDatesOverlap } from '../../utils/calendarUtils';
+import { CalendarGridProps, EventType, CalendarView, LeaveEvent } from '../../types';
 import { EventCreationModal } from '../Modals/EventCreationModal';
+import { EraserConfirmationModal } from '../Modals/EraserConfirmationModal';
 
 interface DragState {
   isDragging: boolean;
@@ -32,7 +33,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   selectedBrush,
   setSelectedBrush
 }) => {
-  const { events, addEvent } = useLeave();
+  const { events, addEvent, eraseEventsInRange } = useLeave();
   
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   
@@ -42,6 +43,20 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     endDate: null,
     initialDate: null
   });
+
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [modalData, setModalData] = useState<{
+    type: EventType;
+    startDate: Date;
+    endDate: Date;
+  } | null>(null);
+
+  const [eraserModalData, setEraserModalData] = useState<{
+    open: boolean;
+    startDate: Date;
+    endDate: Date;
+    eventsToErase: LeaveEvent[];
+  } | null>(null);
 
   const isDateInRange = useCallback((date: Date) => {
     if (!dragState.startDate || !dragState.endDate) return false;
@@ -100,9 +115,25 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   const handleMouseUp = useCallback(() => {
     if (!dragState.isDragging || !dragState.startDate || !dragState.endDate || !selectedBrush) return;
     
-    // Don't show modal for eraser
+    const start = new Date(Math.min(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    const end = new Date(Math.max(dragState.startDate.getTime(), dragState.endDate.getTime()));
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
     if (selectedBrush === EventType.ERASER) {
-      // Handle eraser logic here
+      const eventsToErase = events.filter(event => 
+        doDatesOverlap(event.startDate, event.endDate, start, end)
+      );
+
+      if (eventsToErase.length > 0) {
+        setEraserModalData({
+          open: true,
+          startDate: start,
+          endDate: end,
+          eventsToErase
+        });
+      }
+
       setDragState({
         isDragging: false,
         startDate: null,
@@ -112,13 +143,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       return;
     }
 
-    // Get the actual start and end dates (ordered)
-    const start = new Date(Math.min(dragState.startDate.getTime(), dragState.endDate.getTime()));
-    const end = new Date(Math.max(dragState.startDate.getTime(), dragState.endDate.getTime()));
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    // Show the event creation modal
+    // Show the event creation modal for other brushes
     setModalData({
       type: selectedBrush,
       startDate: start,
@@ -133,7 +158,30 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       endDate: null,
       initialDate: null
     });
-  }, [dragState.isDragging, dragState.startDate, dragState.endDate, selectedBrush]);
+  }, [dragState.isDragging, dragState.startDate, dragState.endDate, selectedBrush, events]);
+
+  const handleEraserConfirm = useCallback(() => {
+    if (!eraserModalData) return;
+
+    try {
+      eraseEventsInRange(eraserModalData.startDate, eraserModalData.endDate);
+      setDragState(prev => ({
+        ...prev,
+        isDragging: false,
+        startDate: null,
+        endDate: null,
+        initialDate: null
+      }));
+    } catch (error) {
+      console.error('Error erasing events:', error);
+    }
+
+    setEraserModalData(null);
+  }, [eraserModalData, eraseEventsInRange]);
+
+  const handleEraserCancel = useCallback(() => {
+    setEraserModalData(null);
+  }, []);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('eventId', id);
@@ -148,13 +196,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const eventId = e.dataTransfer.getData('eventId');
     console.log(`Event ${eventId} dropped on ${date.toISOString()}`);
   };
-
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [modalData, setModalData] = useState<{
-    type: EventType;
-    startDate: Date;
-    endDate: Date;
-  } | null>(null);
 
   const handleEventCreate = (data: { title: string; type: EventType; startDate: Date; endDate: Date }) => {
     addEvent({
@@ -184,6 +225,23 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       default:
         return '';
     }
+  };
+
+  // Add a separate render function for the modal
+  const renderEraserModal = () => {
+    if (!eraserModalData?.open) return null;
+
+    return (
+      <EraserConfirmationModal
+        key={`eraser-modal-${eraserModalData.startDate.getTime()}-${eraserModalData.endDate.getTime()}`}
+        open={eraserModalData.open}
+        onClose={handleEraserCancel}
+        onConfirm={handleEraserConfirm}
+        eventsToErase={eraserModalData.eventsToErase}
+        startDate={eraserModalData.startDate}
+        endDate={eraserModalData.endDate}
+      />
+    );
   };
 
   if (view === 'year') {
@@ -246,6 +304,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             endDate={modalData.endDate}
           />
         )}
+        {renderEraserModal()}
       </>
     );
   }
@@ -296,6 +355,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           endDate={modalData.endDate}
         />
       )}
+
+      {renderEraserModal()}
     </>
   );
 };

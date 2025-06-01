@@ -123,12 +123,12 @@ export const Day: React.FC<DayWithOffProps> = ({
 
   return (
     <div 
-      className={dayClasses}
+      className={`${dayClasses} ${selectedBrush === EventType.ERASER ? 'pointer-events-auto' : ''}`}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onMouseUp={onMouseUp}
     >
-      <div className="relative h-full">
+      <div className={`relative h-full ${selectedBrush === EventType.ERASER ? 'pointer-events-none' : ''}`}>
         {getSpecialBackground()}
         
         <div className="flex justify-between items-start relative z-10">
@@ -139,7 +139,7 @@ export const Day: React.FC<DayWithOffProps> = ({
               <span className="text-[10px] font-medium bg-slate-200 rounded-full h-4 w-4 flex items-center justify-center">
                 {events.length}
               </span>
-              <div className={`absolute bottom-full ${getTooltipPositionClass()} mb-2 hidden group-hover:block z-50`}>
+              <div className={`absolute bottom-full ${getTooltipPositionClass()} mb-2 hidden group-hover:block z-50 ${selectedBrush === EventType.ERASER ? 'hidden' : ''}`}>
                 <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-2 min-w-[200px] max-w-[300px]">
                   {events.map((event, index) => (
                     <div key={event.id} className={`${index > 0 ? 'mt-1 pt-1 border-t border-slate-100' : ''}`}>

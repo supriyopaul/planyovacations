@@ -113,3 +113,17 @@ export const getCalendarDays = (currentDate: Date, view: 'year' | 'month' | 'wee
     };
   });
 };
+
+export const doDatesOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boolean => {
+  const s1 = new Date(start1);
+  const e1 = new Date(end1);
+  const s2 = new Date(start2);
+  const e2 = new Date(end2);
+  
+  s1.setHours(0, 0, 0, 0);
+  e1.setHours(0, 0, 0, 0);
+  s2.setHours(0, 0, 0, 0);
+  e2.setHours(0, 0, 0, 0);
+  
+  return s1 <= e2 && s2 <= e1;
+};

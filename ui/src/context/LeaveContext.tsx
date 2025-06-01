@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { LeaveEvent, EventType, LeaveBalance, CalendarView } from '../types';
 import { generateMockData } from '../utils/mockData';
+import { doDatesOverlap } from '../utils/calendarUtils';
 
 interface LeaveContextType {
   events: LeaveEvent[];
   addEvent: (event: Omit<LeaveEvent, 'id'>) => void;
   updateEvent: (id: string, event: Partial<LeaveEvent>) => void;
   deleteEvent: (id: string) => void;
+  eraseEventsInRange: (startDate: Date, endDate: Date) => LeaveEvent[];
   leaveBalance: LeaveBalance;
   setLeaveBalance: (balance: LeaveBalance) => void;
   isCreatingEvent: boolean;
@@ -25,21 +27,6 @@ interface LeaveContextType {
 }
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
-
-// Helper function to check if two date ranges overlap
-const doDatesOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boolean => {
-  const s1 = new Date(start1);
-  const e1 = new Date(end1);
-  const s2 = new Date(start2);
-  const e2 = new Date(end2);
-  
-  s1.setHours(0, 0, 0, 0);
-  e1.setHours(0, 0, 0, 0);
-  s2.setHours(0, 0, 0, 0);
-  e2.setHours(0, 0, 0, 0);
-  
-  return s1 <= e2 && s2 <= e1;
-};
 
 // Helper function to get overlapping events
 const getOverlappingEvents = (events: LeaveEvent[], startDate: Date, endDate: Date, type: EventType): LeaveEvent[] => {
@@ -322,12 +309,36 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setEndDate(end);
   };
 
+  const eraseEventsInRange = (startDate: Date, endDate: Date): LeaveEvent[] => {
+    // Normalize dates to start of day
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    // Find all events that overlap with the range
+    const eventsToErase = events.filter(event => 
+      doDatesOverlap(event.startDate, event.endDate, start, end)
+    );
+
+    // Create a new array without the events to erase
+    const remainingEvents = events.filter(event => 
+      !eventsToErase.some(e => e.id === event.id)
+    );
+
+    // Update the events state
+    setEvents(remainingEvents);
+
+    return eventsToErase;
+  };
+
   return (
     <LeaveContext.Provider value={{
       events,
       addEvent,
       updateEvent,
       deleteEvent,
+      eraseEventsInRange,
       leaveBalance,
       setLeaveBalance,
       isCreatingEvent,
