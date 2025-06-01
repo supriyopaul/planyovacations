@@ -158,6 +158,47 @@ const handleWorkPeriodConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEv
   return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
 };
 
+// Helper function to check if a date is a weekend
+const isWeekend = (date: Date): boolean => {
+  const day = date.getDay();
+  return day === 0 || day === 6; // 0 is Sunday, 6 is Saturday
+};
+
+// Helper function to calculate business days between two dates (excluding weekends)
+const calculateBusinessDays = (start: Date, end: Date): number => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+
+  let businessDays = 0;
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    if (!isWeekend(currentDate)) {
+      businessDays++;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return businessDays;
+};
+
+// Helper function to recalculate leave balance based on all planned leave events
+const recalculateLeaveBalance = (events: LeaveEvent[]): LeaveBalance => {
+  const plannedLeaveEvents = events.filter(event => event.type === EventType.PLANNED_LEAVE);
+  const totalPlannedDays = plannedLeaveEvents.reduce((total, event) => {
+    return total + calculateBusinessDays(event.startDate, event.endDate);
+  }, 0);
+
+  return {
+    total: 25, // Keep total fixed at 25
+    used: 0,   // Used will be calculated separately when events are marked as used
+    planned: totalPlannedDays,
+    remaining: 25 - totalPlannedDays
+  };
+};
+
 export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>({
@@ -184,6 +225,11 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setEndDate(yearEnd);
     }
   }, []);
+
+  // Update leave balance whenever events change
+  useEffect(() => {
+    setLeaveBalance(recalculateLeaveBalance(events));
+  }, [events]);
 
   const addEvent = (event: Omit<LeaveEvent, 'id'>) => {
     // Normalize dates to start of day
@@ -235,10 +281,6 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       };
       setEvents([...events, newEvent]);
     }
-    
-    if (event.type === EventType.PLANNED_LEAVE) {
-      updateLeaveBalance(event);
-    }
   };
 
   const updateEvent = (id: string, updatedEvent: Partial<LeaveEvent>) => {
@@ -248,32 +290,8 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const deleteEvent = (id: string) => {
-    const eventToDelete = events.find(event => event.id === id);
-    if (eventToDelete && eventToDelete.type === EventType.PLANNED_LEAVE) {
-      const start = new Date(eventToDelete.startDate);
-      const end = new Date(eventToDelete.endDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      setLeaveBalance(prev => ({
-        ...prev,
-        planned: Math.max(0, prev.planned - diffDays),
-        remaining: prev.remaining + diffDays
-      }));
-    }
     setEvents(events.filter(event => event.id !== id));
-  };
-
-  const updateLeaveBalance = (event: Omit<LeaveEvent, 'id'>) => {
-    const start = new Date(event.startDate);
-    const end = new Date(event.endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
-    setLeaveBalance(prev => ({
-      ...prev,
-      planned: prev.planned + diffDays,
-      remaining: prev.remaining - diffDays
-    }));
+    // Leave balance will be recalculated by the useEffect
   };
 
   const generateSuggestions = () => {
