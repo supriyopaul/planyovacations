@@ -12,7 +12,7 @@ function App() {
 
   return (
     <LeaveProvider>
-      <div className="flex h-screen bg-slate-50 text-slate-800">
+      <div className="flex h-screen bg-slate-50 text-slate-800 overflow-hidden">
         <Sidebar 
           isCollapsed={isSidebarCollapsed} 
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
@@ -21,7 +21,7 @@ function App() {
           setSelectedBrush={setSelectedBrush}
         />
         
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 overflow-auto">
           <Calendar offDays={offDays} selectedBrush={selectedBrush} setSelectedBrush={setSelectedBrush} />
         </main>
       </div>

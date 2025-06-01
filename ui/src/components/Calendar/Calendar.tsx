@@ -20,8 +20,8 @@ export const Calendar: React.FC<CalendarProps> = ({ offDays, selectedBrush, setS
   } = useLeave();
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex-1 overflow-auto p-4">
+    <div className="flex flex-col h-full">
+      <div className="p-4">
         <CalendarGrid currentDate={currentDate} view={calendarView} startDate={startDate} endDate={endDate} offDays={offDays} selectedBrush={selectedBrush} setSelectedBrush={setSelectedBrush} />
       </div>
       
