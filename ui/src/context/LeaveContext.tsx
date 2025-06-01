@@ -44,8 +44,8 @@ const doDatesOverlap = (start1: Date, end1: Date, start2: Date, end2: Date): boo
 // Helper function to get overlapping events
 const getOverlappingEvents = (events: LeaveEvent[], startDate: Date, endDate: Date, type: EventType): LeaveEvent[] => {
   return events.filter(event => {
-    // Consider both holiday types and work period types for mutual exclusivity
-    if ((event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY) ||
+    // Consider holiday types, work period types, and planned leave for mutual exclusivity
+    if ((event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY || event.type === EventType.PLANNED_LEAVE) ||
         (event.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD)) {
       return doDatesOverlap(event.startDate, event.endDate, startDate, endDate);
     }
@@ -55,6 +55,7 @@ const getOverlappingEvents = (events: LeaveEvent[], startDate: Date, endDate: Da
 
 // Helper function to merge overlapping events of the same type
 const mergeSameTypeEvents = (events: LeaveEvent[], newEvent: Omit<LeaveEvent, 'id'>, type: EventType): LeaveEvent[] => {
+  // Get all events of the same type that overlap with the new event
   const overlappingEvents = events.filter(event => 
     event.type === type && 
     doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
@@ -74,8 +75,11 @@ const mergeSameTypeEvents = (events: LeaveEvent[], newEvent: Omit<LeaveEvent, 'i
     newEvent.endDate.getTime()
   ));
 
-  // Remove all overlapping events
-  const remainingEvents = events.filter(e => !overlappingEvents.includes(e));
+  // Remove ALL events of the same type that overlap with the merged date range
+  const remainingEvents = events.filter(event => 
+    event.type !== type || 
+    !doDatesOverlap(event.startDate, event.endDate, mergedStart, mergedEnd)
+  );
 
   // Add the merged event with the new event's title
   return [...remainingEvents, {
@@ -84,6 +88,30 @@ const mergeSameTypeEvents = (events: LeaveEvent[], newEvent: Omit<LeaveEvent, 'i
     startDate: mergedStart,
     endDate: mergedEnd
   }];
+};
+
+// Helper function to handle planned leave and holiday conversion
+const handlePlannedLeaveConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEvent, 'id'>): LeaveEvent[] => {
+  // Get all overlapping holiday and planned leave events
+  const overlappingEvents = events.filter(event => 
+    (event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY || event.type === EventType.PLANNED_LEAVE) &&
+    doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
+  );
+
+  if (overlappingEvents.length === 0) {
+    return [...events, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
+  }
+
+  // Remove ALL events of holiday/leave types that overlap with the new event's date range
+  const remainingEvents = events.filter(event => 
+    (event.type !== EventType.HOLIDAY && 
+     event.type !== EventType.OPTIONAL_HOLIDAY && 
+     event.type !== EventType.PLANNED_LEAVE) ||
+    !doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
+  );
+
+  // Add the new event
+  return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
 };
 
 // Helper function to handle holiday type conversion
@@ -98,8 +126,11 @@ const handleHolidayConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEvent
     return [...events, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
   }
 
-  // Remove all overlapping holiday events
-  const remainingEvents = events.filter(e => !overlappingEvents.includes(e));
+  // Remove ALL events of holiday types that overlap with the new event's date range
+  const remainingEvents = events.filter(event => 
+    (event.type !== EventType.HOLIDAY && event.type !== EventType.OPTIONAL_HOLIDAY) ||
+    !doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
+  );
 
   // Add the new event
   return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
@@ -117,8 +148,11 @@ const handleWorkPeriodConversion = (events: LeaveEvent[], newEvent: Omit<LeaveEv
     return [...events, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
   }
 
-  // Remove all overlapping work period events
-  const remainingEvents = events.filter(e => !overlappingEvents.includes(e));
+  // Remove ALL events of work period types that overlap with the new event's date range
+  const remainingEvents = events.filter(event => 
+    (event.type !== EventType.BUSY_PERIOD && event.type !== EventType.SLOW_PERIOD) ||
+    !doDatesOverlap(event.startDate, event.endDate, newEvent.startDate, newEvent.endDate)
+  );
 
   // Add the new event
   return [...remainingEvents, { ...newEvent, id: Math.random().toString(36).substr(2, 9) }];
@@ -165,16 +199,16 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     // Handle different event types
-    if (event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY) {
-      // If there are any overlapping events of different holiday types, handle conversion
+    if (event.type === EventType.HOLIDAY || event.type === EventType.OPTIONAL_HOLIDAY || event.type === EventType.PLANNED_LEAVE) {
+      // If there are any overlapping events of different holiday/leave types, handle conversion
       const hasDifferentTypeOverlap = events.some(e => 
-        (e.type === EventType.HOLIDAY || e.type === EventType.OPTIONAL_HOLIDAY) &&
+        (e.type === EventType.HOLIDAY || e.type === EventType.OPTIONAL_HOLIDAY || e.type === EventType.PLANNED_LEAVE) &&
         e.type !== event.type &&
         doDatesOverlap(e.startDate, e.endDate, start, end)
       );
 
       if (hasDifferentTypeOverlap) {
-        setEvents(handleHolidayConversion(events, normalizedEvent));
+        setEvents(handlePlannedLeaveConversion(events, normalizedEvent));
       } else {
         // Merge with same type events
         setEvents(mergeSameTypeEvents(events, normalizedEvent, event.type));
@@ -182,7 +216,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } else if (event.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD) {
       // If there are any overlapping events of different work period types, handle conversion
       const hasDifferentTypeOverlap = events.some(e => 
-        (e.type === EventType.BUSY_PERIOD || e.type === EventType.SLOW_PERIOD) &&
+        (e.type === EventType.BUSY_PERIOD || event.type === EventType.SLOW_PERIOD) &&
         e.type !== event.type &&
         doDatesOverlap(e.startDate, e.endDate, start, end)
       );
@@ -194,7 +228,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setEvents(mergeSameTypeEvents(events, normalizedEvent, event.type));
       }
     } else {
-      // For other types (e.g., PLANNED_LEAVE), add as normal
+      // For other types (e.g., SUGGESTED_LEAVE), add as normal
       const newEvent = {
         ...normalizedEvent,
         id: Math.random().toString(36).substr(2, 9)

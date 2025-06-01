@@ -35,9 +35,9 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
     
     // Check for overlapping events based on type
     const overlapping = events.filter(event => {
-      // For holiday types
-      if (eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY) {
-      if (event.type !== EventType.HOLIDAY && event.type !== EventType.OPTIONAL_HOLIDAY) {
+      // For holiday types and planned leave
+      if (eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY || eventType === EventType.PLANNED_LEAVE) {
+        if (event.type !== EventType.HOLIDAY && event.type !== EventType.OPTIONAL_HOLIDAY && event.type !== EventType.PLANNED_LEAVE) {
           return false;
         }
       }
@@ -169,41 +169,54 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
           {/* Conversion prompt */}
           {showConversionPrompt && (
             <>
-              {eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY ? (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Select Holiday Type
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="holidayType"
-                      value={EventType.HOLIDAY}
-                      checked={selectedType === EventType.HOLIDAY}
-                      onChange={() => setSelectedType(EventType.HOLIDAY)}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.HOLIDAY)}`}>
-                      Public Holiday
-                    </span>
+              {(eventType === EventType.HOLIDAY || eventType === EventType.OPTIONAL_HOLIDAY || eventType === EventType.PLANNED_LEAVE) ? (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Select Event Type
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="holidayType"
-                      value={EventType.OPTIONAL_HOLIDAY}
-                      checked={selectedType === EventType.OPTIONAL_HOLIDAY}
-                      onChange={() => setSelectedType(EventType.OPTIONAL_HOLIDAY)}
-                      className="text-yellow-600 focus:ring-yellow-500"
-                    />
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.OPTIONAL_HOLIDAY)}`}>
-                      Optional Holiday
-                    </span>
-                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="eventType"
+                        value={EventType.HOLIDAY}
+                        checked={selectedType === EventType.HOLIDAY}
+                        onChange={() => setSelectedType(EventType.HOLIDAY)}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.HOLIDAY)}`}>
+                        Public Holiday
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="eventType"
+                        value={EventType.OPTIONAL_HOLIDAY}
+                        checked={selectedType === EventType.OPTIONAL_HOLIDAY}
+                        onChange={() => setSelectedType(EventType.OPTIONAL_HOLIDAY)}
+                        className="text-yellow-600 focus:ring-yellow-500"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.OPTIONAL_HOLIDAY)}`}>
+                        Optional Holiday
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="eventType"
+                        value={EventType.PLANNED_LEAVE}
+                        checked={selectedType === EventType.PLANNED_LEAVE}
+                        onChange={() => setSelectedType(EventType.PLANNED_LEAVE)}
+                        className="text-teal-600 focus:ring-teal-500"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(EventType.PLANNED_LEAVE)}`}>
+                        Planned Leave
+                      </span>
+                    </label>
+                  </div>
                 </div>
-              </div>
-              ) : eventType === EventType.BUSY_PERIOD || eventType === EventType.SLOW_PERIOD ? (
+              ) : (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Select Work Period Type
@@ -237,7 +250,7 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
                     </label>
                   </div>
                 </div>
-              ) : null}
+              )}
             </>
           )}
 
