@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { LeaveEvent, EventType, LeaveBalance, CalendarView } from '../types';
+import { LeaveEvent, EventType, LeaveBalance, CalendarView, CalendarExportData } from '../types';
 import { generateMockData } from '../utils/mockData';
 import { doDatesOverlap } from '../utils/calendarUtils';
 
@@ -24,6 +24,10 @@ interface LeaveContextType {
   startDate: Date | null;
   endDate: Date | null;
   setDateRange: (start: Date | null, end: Date | null) => void;
+  exportCalendarData: () => CalendarExportData;
+  importCalendarData: (data: CalendarExportData) => void;
+  offDays: number[];
+  setOffDays: (days: number[]) => void;
 }
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
@@ -201,6 +205,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [offDays, setOffDays] = useState<number[]>([0, 6]); // Default to weekends off
 
   // Set default start and end date to this year's start and end on initial load
   useEffect(() => {
@@ -332,6 +337,41 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return eventsToErase;
   };
 
+  const exportCalendarData = (): CalendarExportData => {
+    return {
+      events,
+      leaveBalance,
+      calendarView,
+      currentDate: currentDate.toISOString(),
+      startDate: startDate?.toISOString() || null,
+      endDate: endDate?.toISOString() || null,
+      offDays,
+      version: '1.0.0'
+    };
+  };
+
+  const importCalendarData = (data: CalendarExportData) => {
+    // Validate version
+    if (data.version !== '1.0.0') {
+      throw new Error('Unsupported calendar data version');
+    }
+
+    // Convert string dates back to Date objects
+    const eventsWithDates = data.events.map(event => ({
+      ...event,
+      startDate: new Date(event.startDate),
+      endDate: new Date(event.endDate)
+    }));
+
+    setEvents(eventsWithDates);
+    setLeaveBalance(data.leaveBalance);
+    setCalendarView(data.calendarView);
+    setCurrentDate(new Date(data.currentDate));
+    setStartDate(data.startDate ? new Date(data.startDate) : null);
+    setEndDate(data.endDate ? new Date(data.endDate) : null);
+    setOffDays(data.offDays);
+  };
+
   return (
     <LeaveContext.Provider value={{
       events,
@@ -353,7 +393,11 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setActiveEventId,
       startDate,
       endDate,
-      setDateRange
+      setDateRange,
+      exportCalendarData,
+      importCalendarData,
+      offDays,
+      setOffDays
     }}>
       {children}
     </LeaveContext.Provider>

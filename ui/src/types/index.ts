@@ -62,3 +62,14 @@ export interface QuickActionsPanelProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
+
+export interface CalendarExportData {
+  events: LeaveEvent[];
+  leaveBalance: LeaveBalance;
+  calendarView: CalendarView;
+  currentDate: string; // ISO string
+  startDate: string | null; // ISO string
+  endDate: string | null; // ISO string
+  offDays: number[];
+  version: string; // For future compatibility
+}
