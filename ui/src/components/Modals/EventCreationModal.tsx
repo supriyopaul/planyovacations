@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { EventType } from '../../types';
 import { useLeave } from '../../context/LeaveContext';
@@ -25,6 +25,14 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
   const [error, setError] = useState('');
   const [showConversionPrompt, setShowConversionPrompt] = useState(false);
   const [selectedType, setSelectedType] = useState<EventType>(eventType);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus title input when modal opens
+  useEffect(() => {
+    if (open && titleInputRef.current) {
+      titleInputRef.current.focus();
+    }
+  }, [open]);
 
   // Ensure dates are always ordered correctly
   const { displayStartDate, displayEndDate, overlappingEvents } = useMemo(() => {
@@ -145,6 +153,7 @@ export const EventCreationModal: React.FC<EventCreationModalProps> = ({
               Title <span className="text-red-500">*</span>
             </label>
             <input
+              ref={titleInputRef}
               type="text"
               id="title"
               value={title}
