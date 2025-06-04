@@ -1,0 +1,180 @@
+{
+  "events": [
+    {
+      "title": "New Year's Day",
+      "type": "holiday",
+      "startDate": "2025-01-01T00:00:00.000Z",
+      "endDate": "2025-01-03T00:00:00.000Z",
+      "id": "jpnyd25"
+    },
+    {
+      "title": "Coming of Age Day",
+      "type": "holiday",
+      "startDate": "2025-01-13T00:00:00.000Z",
+      "endDate": "2025-01-13T00:00:00.000Z",
+      "id": "jpcoa25"
+    },
+    {
+      "title": "National Foundation Day",
+      "type": "holiday",
+      "startDate": "2025-02-11T00:00:00.000Z",
+      "endDate": "2025-02-11T00:00:00.000Z",
+      "id": "jpnfd25"
+    },
+    {
+      "title": "Emperor's Birthday",
+      "type": "holiday",
+      "startDate": "2025-02-23T00:00:00.000Z",
+      "endDate": "2025-02-23T00:00:00.000Z",
+      "id": "jpempb25"
+    },
+    {
+      "title": "Vernal Equinox Day",
+      "type": "holiday",
+      "startDate": "2025-03-20T00:00:00.000Z",
+      "endDate": "2025-03-20T00:00:00.000Z",
+      "id": "jpved25"
+    },
+    {
+      "title": "Showa Day",
+      "type": "holiday",
+      "startDate": "2025-04-29T00:00:00.000Z",
+      "endDate": "2025-04-29T00:00:00.000Z",
+      "id": "jpshowa25"
+    },
+    {
+      "title": "Constitution Memorial Day",
+      "type": "holiday",
+      "startDate": "2025-05-03T00:00:00.000Z",
+      "endDate": "2025-05-03T00:00:00.000Z",
+      "id": "jpcmd25"
+    },
+    {
+      "title": "Greenery Day",
+      "type": "holiday",
+      "startDate": "2025-05-04T00:00:00.000Z",
+      "endDate": "2025-05-04T00:00:00.000Z",
+      "id": "jpgreen25"
+    },
+    {
+      "title": "Children's Day",
+      "type": "holiday",
+      "startDate": "2025-05-05T00:00:00.000Z",
+      "endDate": "2025-05-05T00:00:00.000Z",
+      "id": "jpchild25"
+    },
+    {
+      "title": "Marine Day",
+      "type": "holiday",
+      "startDate": "2025-07-21T00:00:00.000Z",
+      "endDate": "2025-07-21T00:00:00.000Z",
+      "id": "jpmarine25"
+    },
+    {
+      "title": "Mountain Day",
+      "type": "holiday",
+      "startDate": "2025-08-11T00:00:00.000Z",
+      "endDate": "2025-08-11T00:00:00.000Z",
+      "id": "jpmountain25"
+    },
+    {
+      "title": "Respect for the Aged Day",
+      "type": "holiday",
+      "startDate": "2025-09-15T00:00:00.000Z",
+      "endDate": "2025-09-15T00:00:00.000Z",
+      "id": "jprad25"
+    },
+    {
+      "title": "Autumnal Equinox Day",
+      "type": "holiday",
+      "startDate": "2025-09-23T00:00:00.000Z",
+      "endDate": "2025-09-23T00:00:00.000Z",
+      "id": "jpaed25"
+    },
+    {
+      "title": "Health and Sports Day",
+      "type": "holiday",
+      "startDate": "2025-10-13T00:00:00.000Z",
+      "endDate": "2025-10-13T00:00:00.000Z",
+      "id": "jpsports25"
+    },
+    {
+      "title": "Culture Day",
+      "type": "holiday",
+      "startDate": "2025-11-03T00:00:00.000Z",
+      "endDate": "2025-11-03T00:00:00.000Z",
+      "id": "jpculture25"
+    },
+    {
+      "title": "Labor Thanksgiving Day",
+      "type": "holiday",
+      "startDate": "2025-11-23T00:00:00.000Z",
+      "endDate": "2025-11-23T00:00:00.000Z",
+      "id": "jplabthx25"
+    },
+    {
+      "title": "Spring Break Trip - Kyoto",
+      "type": "planned_leave",
+      "startDate": "2025-03-24T00:00:00.000Z",
+      "endDate": "2025-03-28T00:00:00.000Z",
+      "id": "kenjispring25"
+    },
+    {
+      "title": "Summer Trip - Hokkaido",
+      "type": "planned_leave",
+      "startDate": "2025-08-04T00:00:00.000Z",
+      "endDate": "2025-08-08T00:00:00.000Z",
+      "id": "kenjisummer25"
+    },
+    {
+      "title": "Golden Week - Extra Day Off",
+      "type": "optional_holiday",
+      "startDate": "2025-05-02T00:00:00.000Z",
+      "endDate": "2025-05-02T00:00:00.000Z",
+      "id": "kenjigw25"
+    },
+    {
+      "title": "School Term Start",
+      "type": "busy_period",
+      "startDate": "2025-04-01T00:00:00.000Z",
+      "endDate": "2025-04-11T00:00:00.000Z",
+      "id": "kenjibusy1"
+    },
+    {
+      "title": "Exam Grading Period",
+      "type": "busy_period",
+      "startDate": "2025-07-14T00:00:00.000Z",
+      "endDate": "2025-07-18T00:00:00.000Z",
+      "id": "kenjibusy2"
+    },
+    {
+      "title": "School Summer Holidays",
+      "type": "slow_period",
+      "startDate": "2025-07-22T00:00:00.000Z",
+      "endDate": "2025-08-29T00:00:00.000Z",
+      "id": "kenjislow1"
+    },
+    {
+      "title": "School Winter Holidays",
+      "type": "slow_period",
+      "startDate": "2025-12-24T00:00:00.000Z",
+      "endDate": "2026-01-05T00:00:00.000Z",
+      "id": "kenjislow2"
+    }
+  ],
+  "leaveBalance": {
+    "total": 15,
+    "used": 0,
+    "planned": 10,
+    "remaining": 5
+  },
+  "calendarView": "year",
+  "currentDate": "2025-06-04T00:00:00.000Z",
+  "startDate": "2025-01-01T00:00:00.000Z",
+  "endDate": "2025-12-31T00:00:00.000Z",
+  "offDays": [
+    6,
+    0
+  ],
+  "version": "1.0.0"
+}

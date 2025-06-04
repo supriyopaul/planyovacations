@@ -67,11 +67,18 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
 };
 
 export const getEventsForDay = (date: Date, events: LeaveEvent[]): LeaveEvent[] => {
+  // Normalize the calendar cell date to local midnight
+  const normalizedDay = new Date(date);
+  normalizedDay.setHours(0, 0, 0, 0);
+
   return events.filter(event => {
+    // Normalize event start and end dates to local midnight
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
-    
-    return date >= startDate && date <= endDate;
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    return normalizedDay >= startDate && normalizedDay <= endDate;
   });
 };
 

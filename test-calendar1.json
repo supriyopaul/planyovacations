@@ -1,0 +1,138 @@
+{
+  "events": [
+    {
+      "title": "New Year's Day",
+      "type": "holiday",
+      "startDate": "2025-01-01T00:00:00.000Z",
+      "endDate": "2025-01-01T00:00:00.000Z",
+      "id": "usnyd25"
+    },
+    {
+      "title": "Martin Luther King Jr. Day",
+      "type": "holiday",
+      "startDate": "2025-01-20T00:00:00.000Z",
+      "endDate": "2025-01-20T00:00:00.000Z",
+      "id": "usmlk25"
+    },
+    {
+      "title": "Presidents' Day",
+      "type": "holiday",
+      "startDate": "2025-02-17T00:00:00.000Z",
+      "endDate": "2025-02-17T00:00:00.000Z",
+      "id": "uspres25"
+    },
+    {
+      "title": "Memorial Day",
+      "type": "holiday",
+      "startDate": "2025-05-26T00:00:00.000Z",
+      "endDate": "2025-05-26T00:00:00.000Z",
+      "id": "usmem25"
+    },
+    {
+      "title": "Juneteenth",
+      "type": "holiday",
+      "startDate": "2025-06-19T00:00:00.000Z",
+      "endDate": "2025-06-19T00:00:00.000Z",
+      "id": "usjune25"
+    },
+    {
+      "title": "Independence Day",
+      "type": "holiday",
+      "startDate": "2025-07-04T00:00:00.000Z",
+      "endDate": "2025-07-04T00:00:00.000Z",
+      "id": "usind25"
+    },
+    {
+      "title": "Labor Day",
+      "type": "holiday",
+      "startDate": "2025-09-01T00:00:00.000Z",
+      "endDate": "2025-09-01T00:00:00.000Z",
+      "id": "uslab25"
+    },
+    {
+      "title": "Thanksgiving Day",
+      "type": "holiday",
+      "startDate": "2025-11-27T00:00:00.000Z",
+      "endDate": "2025-11-27T00:00:00.000Z",
+      "id": "usthx25"
+    },
+    {
+      "title": "Day after Thanksgiving",
+      "type": "optional_holiday",
+      "startDate": "2025-11-28T00:00:00.000Z",
+      "endDate": "2025-11-28T00:00:00.000Z",
+      "id": "usthx25f"
+    },
+    {
+      "title": "Christmas Day",
+      "type": "holiday",
+      "startDate": "2025-12-25T00:00:00.000Z",
+      "endDate": "2025-12-25T00:00:00.000Z",
+      "id": "usxmas25"
+    },
+    {
+      "title": "Ski Trip Aspen",
+      "type": "planned_leave",
+      "startDate": "2025-02-18T00:00:00.000Z",
+      "endDate": "2025-02-21T00:00:00.000Z",
+      "id": "ameski25"
+    },
+    {
+      "title": "Europe Summer Vacation",
+      "type": "planned_leave",
+      "startDate": "2025-07-07T00:00:00.000Z",
+      "endDate": "2025-07-18T00:00:00.000Z",
+      "id": "ameeur25"
+    },
+    {
+      "title": "Thanksgiving Break",
+      "type": "planned_leave",
+      "startDate": "2025-11-24T00:00:00.000Z",
+      "endDate": "2025-11-26T00:00:00.000Z",
+      "id": "amethx25"
+    },
+    {
+      "title": "Product Launch Crunch",
+      "type": "busy_period",
+      "startDate": "2025-03-10T00:00:00.000Z",
+      "endDate": "2025-03-28T00:00:00.000Z",
+      "id": "amebusy1"
+    },
+    {
+      "title": "Q3 Feature Freeze",
+      "type": "busy_period",
+      "startDate": "2025-08-18T00:00:00.000Z",
+      "endDate": "2025-08-29T00:00:00.000Z",
+      "id": "amebusy2"
+    },
+    {
+      "title": "Mid-Summer Slowdown",
+      "type": "slow_period",
+      "startDate": "2025-07-21T00:00:00.000Z",
+      "endDate": "2025-08-08T00:00:00.000Z",
+      "id": "ameslow1"
+    },
+    {
+      "title": "Year-End Code Freeze",
+      "type": "slow_period",
+      "startDate": "2025-12-15T00:00:00.000Z",
+      "endDate": "2025-12-31T00:00:00.000Z",
+      "id": "ameslow2"
+    }
+  ],
+  "leaveBalance": {
+    "total": 20,
+    "used": 0,
+    "planned": 17,
+    "remaining": 3
+  },
+  "calendarView": "year",
+  "currentDate": "2025-06-04T00:00:00.000Z",
+  "startDate": "2025-01-01T00:00:00.000Z",
+  "endDate": "2025-12-31T00:00:00.000Z",
+  "offDays": [
+    6,
+    0
+  ],
+  "version": "1.0.0"
+}
