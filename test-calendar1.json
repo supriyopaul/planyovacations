@@ -121,10 +121,10 @@
     }
   ],
   "leaveBalance": {
-    "total": 20,
+    "total": 25,
     "used": 0,
     "planned": 17,
-    "remaining": 3
+    "remaining": 8
   },
   "calendarView": "year",
   "currentDate": "2025-06-04T00:00:00.000Z",
@@ -134,5 +134,8 @@
     6,
     0
   ],
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "leaveStylePreferences": {
+    "style": "long"
+  }
 }

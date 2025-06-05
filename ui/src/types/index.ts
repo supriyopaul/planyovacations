@@ -63,6 +63,12 @@ export interface QuickActionsPanelProps {
   onToggleCollapse: () => void;
 }
 
+export type LeaveStyle = 'short' | 'mixed' | 'long';
+
+export interface LeaveStylePreferences {
+  style: LeaveStyle;
+}
+
 export interface CalendarExportData {
   events: LeaveEvent[];
   leaveBalance: LeaveBalance;
@@ -72,4 +78,5 @@ export interface CalendarExportData {
   endDate: string | null; // ISO string
   offDays: number[];
   version: string; // For future compatibility
+  leaveStylePreferences?: LeaveStylePreferences; // Optional for backward compatibility
 }

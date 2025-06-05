@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { LeaveEvent, EventType, LeaveBalance, CalendarView, CalendarExportData } from '../types';
+import { LeaveEvent, EventType, LeaveBalance, CalendarView, CalendarExportData, LeaveStylePreferences, LeaveStyle } from '../types';
 import { generateMockData } from '../utils/mockData';
 import { doDatesOverlap } from '../utils/calendarUtils';
 
@@ -28,6 +28,9 @@ interface LeaveContextType {
   importCalendarData: (data: CalendarExportData) => void;
   offDays: number[];
   setOffDays: (days: number[]) => void;
+  leaveStylePreferences: LeaveStylePreferences;
+  setLeaveStylePreferences: (prefs: LeaveStylePreferences) => void;
+  localStorageAvailable: boolean;
 }
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
@@ -206,6 +209,10 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [offDays, setOffDays] = useState<number[]>([0, 6]); // Default to weekends off
+  const [leaveStylePreferences, setLeaveStylePreferences] = useState<LeaveStylePreferences>({
+    style: 'mixed'
+  });
+  const [localStorageAvailable, setLocalStorageAvailable] = useState(true);
 
   // Set default start and end date to this year's start and end on initial load
   useEffect(() => {
@@ -222,6 +229,46 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     setLeaveBalance(recalculateLeaveBalance(events));
   }, [events]);
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('calendarData');
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.version === '1.0.0') {
+          // Defensive: use importCalendarData logic
+          importCalendarData(data);
+        }
+      }
+    } catch (e) {
+      setLocalStorageAvailable(false);
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Ensure startDate and endDate are set to current year if null after hydration
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      const now = new Date();
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      const yearEnd = new Date(now.getFullYear(), 11, 31);
+      if (!startDate) setStartDate(yearStart);
+      if (!endDate) setEndDate(yearEnd);
+    }
+  }, [startDate, endDate]);
+
+  // Persist to localStorage on any relevant state change
+  useEffect(() => {
+    try {
+      const data = exportCalendarData();
+      localStorage.setItem('calendarData', JSON.stringify(data));
+      setLocalStorageAvailable(true);
+    } catch (e) {
+      setLocalStorageAvailable(false);
+    }
+    // eslint-disable-next-line
+  }, [events, leaveBalance, calendarView, currentDate, startDate, endDate, offDays, leaveStylePreferences]);
 
   const addEvent = (event: Omit<LeaveEvent, 'id'>) => {
     // Normalize dates to start of day
@@ -346,7 +393,8 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       startDate: startDate?.toISOString() || null,
       endDate: endDate?.toISOString() || null,
       offDays,
-      version: '1.0.0'
+      version: '1.0.0',
+      leaveStylePreferences
     };
   };
 
@@ -370,6 +418,24 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setStartDate(data.startDate ? new Date(data.startDate) : null);
     setEndDate(data.endDate ? new Date(data.endDate) : null);
     setOffDays(data.offDays);
+    if (data.leaveStylePreferences) {
+      // Migration: if old structure, map to new style
+      if (
+        typeof (data.leaveStylePreferences as any).style === 'string'
+      ) {
+        setLeaveStylePreferences({ style: (data.leaveStylePreferences as any).style as LeaveStyle });
+      } else {
+        // Old structure: map numeric values to style
+        const old = data.leaveStylePreferences as any;
+        let style: LeaveStyle = 'mixed';
+        if (old.leaveLength !== undefined) {
+          if (old.leaveLength < 33) style = 'short';
+          else if (old.leaveLength < 66) style = 'mixed';
+          else style = 'long';
+        }
+        setLeaveStylePreferences({ style });
+      }
+    }
   };
 
   return (
@@ -397,7 +463,10 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       exportCalendarData,
       importCalendarData,
       offDays,
-      setOffDays
+      setOffDays,
+      leaveStylePreferences,
+      setLeaveStylePreferences,
+      localStorageAvailable
     }}>
       {children}
     </LeaveContext.Provider>

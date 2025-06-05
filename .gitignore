@@ -26,3 +26,8 @@ dist-ssr
 
 # python
 venv/
+.DS_Store
+
+# Prompts
+.request.md
+.refresh.md

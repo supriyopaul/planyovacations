@@ -91,7 +91,8 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
     exportCalendarData,
     importCalendarData,
     offDays: contextOffDays,
-    setOffDays: setContextOffDays
+    setOffDays: setContextOffDays,
+    localStorageAvailable
   } = useLeave();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -301,25 +302,8 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
       {/* Leave Style Preferences - Only one slider */}
       <div className="px-4 py-4 border-b border-slate-300">
         <h3 className="text-sm font-medium text-slate-600 mb-3">Leave Style Preferences</h3>
-        {/* Single slider for leave style preferences */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="leave-style-slider" className="text-xs text-slate-600 mb-1">Preference</label>
-          <input
-            id="leave-style-slider"
-            type="range"
-            min={0}
-            max={2}
-            step={1}
-            className="w-full accent-purple-500"
-            // No-op for now
-            onChange={() => {}}
-          />
-          <div className="flex justify-between text-xs text-slate-500 mt-1">
-            <span>Short breaks</span>
-            <span>Mixed durations</span>
-            <span>Long vacations</span>
-          </div>
-        </div>
+        {/* Use the context-based LeavePreferenceSlider */}
+        <LeavePreferenceSlider />
         {/* Only the Generate Suggestions button, no suggestions or empty state */}
         <div className="mt-6">
           <button
@@ -370,6 +354,16 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
           )}
         </div>
       </div>
+      {/* Modal warning if localStorage is unavailable */}
+      {!localStorageAvailable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto text-center">
+            <h2 className="text-lg font-semibold text-red-600 mb-2">Warning: Data Not Saved</h2>
+            <p className="text-slate-700 mb-4">Your calendar data cannot be saved in this browser. All changes will be lost after a refresh or closing the tab. Please enable localStorage or use a supported browser.</p>
+            <button className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" onClick={() => window.location.reload()}>Reload</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
