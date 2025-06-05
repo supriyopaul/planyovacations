@@ -6,6 +6,7 @@ import { LeavePreferenceSlider } from '../QuickActions/LeavePreferenceSlider';
 import { SuggestedLeaveList } from '../QuickActions/SuggestedLeaveList';
 import { WeekendMarker } from '../WeekendMarker';
 import { EventType, CalendarExportData } from '../../types';
+import { exportCalendarDataToPDF } from '../../utils/calendarUtils';
 
 // Utility to format date for input type=date
 const formatDateInput = (date: Date | null) =>
@@ -165,6 +166,16 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
     } catch (err) {
       setError('Failed to export calendar data');
       console.error('Export error:', err);
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const data = exportCalendarData();
+      exportCalendarDataToPDF(data);
+    } catch (err) {
+      setError('Failed to export calendar PDF');
+      console.error('Export PDF error:', err);
     }
   };
 
@@ -328,6 +339,14 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
           >
             <Download size={20} />
             {!isCollapsed && <span>Export</span>}
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+            title="Export Calendar as PDF"
+          >
+            <Download size={20} />
+            {!isCollapsed && <span>Export PDF</span>}
           </button>
           <button
             onClick={triggerImport}
