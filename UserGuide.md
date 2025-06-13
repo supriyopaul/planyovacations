@@ -92,27 +92,44 @@ Planyovacations is an interactive calendar app designed to help you plan your le
 
 ---
 
-## Overlapping Events
+## Event Visualization
+
+### Colored Lines
+
+- Events are displayed as colored lines at the bottom of each calendar day.
+- Each event type has a distinct color:
+  - **Public Holiday**: Blue line
+  - **Optional Holiday**: Yellow line
+  - **Planned Leave**: Teal line
+  - **Busy Period**: Red line
+  - **Slow Period**: Orange line
+  - **Suggested Leave**: Amber line
+- Multiple events of the same type on the same day are shown as a single line.
+- Different event types on the same day are shown as separate lines.
+- Lines extend continuously across date ranges, with rounded corners at the start and end of ranges.
+- Hover over any line to see a tooltip with the event title(s).
+
+### Overlapping Events
 
 - Only one event from each mutually exclusive group can exist per day:
   - **Public Holiday, Optional Holiday, Planned Leave** are mutually exclusive.
   - **Busy Period, Slow Period** are mutually exclusive.
 - Marking a new event over an existing, mutually exclusive event will prompt you to convert or replace it.
 - Multiple non-exclusive events (e.g., Planned Leave + Busy Period) can coexist on the same day.
-- Overlapping events are visually indicated with color backgrounds and event badges; hover to see details.
+- Overlapping events are visually indicated with multiple colored lines; hover to see details.
 
 ---
 
 ## Event Types, Exclusivity, and Colors
 
-| Event Type       | Color (BG/Text) | Mutually Exclusive With         | Affects Leave Balance | Description                   |
-| ---------------- | --------------- | ------------------------------- | --------------------- | ----------------------------- |
-| Public Holiday   | Blue            | Optional Holiday, Planned Leave | No                    | Non-working day, set by admin |
-| Optional Holiday | Yellow          | Public Holiday, Planned Leave   | No                    | User-selectable holiday       |
-| Planned Leave    | Teal            | Public/Optional Holiday         | Yes                   | User's planned time off       |
-| Busy Period      | Red             | Slow Period                     | No                    | High workload, avoid leave    |
-| Slow Period      | Orange          | Busy Period                     | No                    | Low workload, good for leave  |
-| Suggested Leave  | Amber/Purple    | (N/A, suggestion only)          | No                    | AI-generated leave suggestion |
+| Event Type       | Color (Line) | Mutually Exclusive With         | Affects Leave Balance | Description                   |
+| ---------------- | ------------ | ------------------------------- | --------------------- | ----------------------------- |
+| Public Holiday   | Blue         | Optional Holiday, Planned Leave | No                    | Non-working day, set by admin |
+| Optional Holiday | Yellow       | Public Holiday, Planned Leave   | No                    | User-selectable holiday       |
+| Planned Leave    | Teal         | Public/Optional Holiday         | Yes                   | User's planned time off       |
+| Busy Period      | Red          | Slow Period                     | No                    | High workload, avoid leave    |
+| Slow Period      | Orange       | Busy Period                     | No                    | Low workload, good for leave  |
+| Suggested Leave  | Amber        | (N/A, suggestion only)          | No                    | AI-generated leave suggestion |
 
 ---
 
@@ -124,3 +141,4 @@ Planyovacations is an interactive calendar app designed to help you plan your le
 - **Check for overlaps**: The app will prompt you if you try to mark over a mutually exclusive event.
 - **Review your leave balance** after making changes.
 - **Export your calendar** regularly for backup.
+- **Hover over lines** to see event details and titles.

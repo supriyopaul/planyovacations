@@ -85,31 +85,23 @@ export const Day: React.FC<DayWithOffProps> = ({
     selectedBrush ? getBrushPreviewClass() : isWeekend ? 'hover:bg-slate-200' : 'hover:bg-slate-50',
     'cursor-pointer'
   ].join(' ');
-  
-  const getSpecialBackground = () => {
-    const specialEvent = events.find(event => 
-      event.type === EventType.HOLIDAY || 
-      event.type === EventType.OPTIONAL_HOLIDAY ||
-      event.type === EventType.PLANNED_LEAVE ||
-      event.type === EventType.BUSY_PERIOD ||
-      event.type === EventType.SLOW_PERIOD
-    );
-    
-    if (!specialEvent) return null;
-    
-    switch (specialEvent.type) {
+
+  const getEventLineColor = (eventType: EventType) => {
+    switch (eventType) {
       case EventType.HOLIDAY:
-        return <div className="absolute inset-0 bg-blue-100 opacity-60 pointer-events-none" />;
+        return 'bg-blue-500';
       case EventType.OPTIONAL_HOLIDAY:
-        return <div className="absolute inset-0 bg-yellow-100 opacity-60 pointer-events-none" />;
+        return 'bg-yellow-500';
       case EventType.PLANNED_LEAVE:
-        return <div className="absolute inset-0 bg-teal-100 opacity-60 pointer-events-none" />;
+        return 'bg-teal-500';
       case EventType.BUSY_PERIOD:
-        return <div className="absolute inset-0 bg-red-100 opacity-60 pointer-events-none" />;
+        return 'bg-red-500';
       case EventType.SLOW_PERIOD:
-        return <div className="absolute inset-0 bg-orange-100 opacity-60 pointer-events-none" />;
+        return 'bg-orange-500';
+      case EventType.SUGGESTED_LEAVE:
+        return 'bg-amber-500';
       default:
-        return null;
+        return 'bg-slate-500';
     }
   };
 
@@ -121,6 +113,32 @@ export const Day: React.FC<DayWithOffProps> = ({
     return 'left-1/2 -translate-x-1/2';
   };
 
+  // Group events by type to avoid duplicate lines
+  const eventsByType = events.reduce((acc, event) => {
+    if (!acc[event.type]) {
+      acc[event.type] = [];
+    }
+    acc[event.type].push(event);
+    return acc;
+  }, {} as Record<EventType, typeof events>);
+
+  // Helper function to determine if an event continues to the next day
+  const isEventRangeStart = (event: any) => {
+    const eventStart = new Date(event.startDate);
+    eventStart.setHours(0, 0, 0, 0);
+    const currentDate = new Date(date);
+    currentDate.setHours(0, 0, 0, 0);
+    return eventStart.getTime() === currentDate.getTime();
+  };
+
+  const isEventRangeEnd = (event: any) => {
+    const eventEnd = new Date(event.endDate);
+    eventEnd.setHours(0, 0, 0, 0);
+    const currentDate = new Date(date);
+    currentDate.setHours(0, 0, 0, 0);
+    return eventEnd.getTime() === currentDate.getTime();
+  };
+
   return (
     <div 
       className={`${dayClasses} ${selectedBrush === EventType.ERASER ? 'pointer-events-auto' : ''}`}
@@ -129,29 +147,48 @@ export const Day: React.FC<DayWithOffProps> = ({
       onMouseUp={onMouseUp}
     >
       <div className={`relative h-full ${selectedBrush === EventType.ERASER ? 'pointer-events-none' : ''}`}>
-        {getSpecialBackground()}
-        
-        <div className="flex justify-between items-start relative z-10">
-          <span className={`text-xs font-medium ${isOffDay ? 'text-slate-400' : ''}`}>{date.getDate()}</span>
-          
-          {events.length > 0 && (
-            <div className="relative group">
-              <span className="text-[10px] font-medium bg-slate-200 rounded-full h-4 w-4 flex items-center justify-center">
-                {events.length}
-              </span>
-              <div className={`absolute bottom-full ${getTooltipPositionClass()} mb-2 hidden group-hover:block z-50 ${selectedBrush === EventType.ERASER ? 'hidden' : ''}`}>
-                <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-2 min-w-[200px] max-w-[300px]">
-                  {events.map((event, index) => (
-                    <div key={event.id} className={`${index > 0 ? 'mt-1 pt-1 border-t border-slate-100' : ''}`}>
-                      <EventBadge event={event} />
-                    </div>
-                  ))}
-                </div>
-                <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-1 w-2 h-2 bg-white border-r border-b border-slate-200 rotate-45"></div>
-              </div>
+        {/* Only show content for current month days */}
+        {isCurrentMonth && (
+          <>
+            <div className="flex justify-between items-start relative z-10">
+              <span className={`text-xs font-medium ${isOffDay ? 'text-slate-400' : ''}`}>{date.getDate()}</span>
             </div>
-          )}
-        </div>
+            
+            {/* Event lines at the bottom */}
+            {events.length > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 flex">
+                {Object.entries(eventsByType).map(([eventType, typeEvents], index) => {
+                  const event = typeEvents[0]; // Take the first event of this type
+                  const isStart = isEventRangeStart(event);
+                  const isEnd = isEventRangeEnd(event);
+                  
+                  return (
+                    <div key={eventType} className="relative group flex-1">
+                      <div 
+                        className={`h-full ${getEventLineColor(eventType as EventType)} cursor-pointer transition-opacity hover:opacity-80 ${
+                          isStart ? 'rounded-l-sm' : ''
+                        } ${
+                          isEnd ? 'rounded-r-sm' : ''
+                        }`}
+                        title={typeEvents.map(e => e.title).join(', ')}
+                      />
+                      <div className={`absolute bottom-full ${getTooltipPositionClass()} mb-2 hidden group-hover:block z-50 ${selectedBrush === EventType.ERASER ? 'hidden' : ''}`}>
+                        <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-2 min-w-[200px] max-w-[300px]">
+                          {typeEvents.map((event, eventIndex) => (
+                            <div key={event.id} className={`${eventIndex > 0 ? 'mt-1 pt-1 border-t border-slate-100' : ''}`}>
+                              <EventBadge event={event} />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-1 w-2 h-2 bg-white border-r border-b border-slate-200 rotate-45"></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
