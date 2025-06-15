@@ -97,6 +97,7 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   // Date range handlers
   const handleDateRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -307,10 +308,17 @@ export const Sidebar: React.FC<SidebarWithOffDaysProps> = ({ isCollapsed, onTogg
         {/* Only the Generate Suggestions button, no suggestions or empty state */}
         <div className="mt-6">
           <button
-            className="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-md transition-colors"
-            // No-op for now
-            onClick={() => {}}
+            className="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-md transition-colors flex items-center justify-center gap-2"
+            onClick={async () => {
+              setLoadingSuggestions(true);
+              await generateSuggestions();
+              setLoadingSuggestions(false);
+            }}
+            disabled={loadingSuggestions}
           >
+            {loadingSuggestions ? (
+              <span className="animate-spin mr-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            ) : null}
             Generate Suggestions
           </button>
         </div>

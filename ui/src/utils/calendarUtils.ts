@@ -191,7 +191,7 @@ export const exportCalendarDataToPDF = (data: CalendarExportData, filename = `ca
       return [new Date(now.getFullYear(), now.getMonth(), 1)];
     }
     const months = [];
-    let current = new Date(start.getFullYear(), start.getMonth(), 1);
+    const current = new Date(start.getFullYear(), start.getMonth(), 1);
     const last = new Date(end.getFullYear(), end.getMonth(), 1);
     while (current <= last) {
       months.push(new Date(current));

@@ -19,6 +19,7 @@ interface LeaveContextType {
   setCurrentDate: (date: Date) => void;
   suggestedLeave: LeaveEvent[];
   generateSuggestions: () => void;
+  clearSuggestions: () => void;
   activeEventId: string | null;
   setActiveEventId: (id: string | null) => void;
   startDate: Date | null;
@@ -193,6 +194,37 @@ const recalculateLeaveBalance = (events: LeaveEvent[]): LeaveBalance => {
   };
 };
 
+// Add fetch utility for suggestions
+async function fetchSuggestions(calendarData: CalendarExportData): Promise<{ events: LeaveEvent[], report: any }> {
+  const response = await fetch('http://localhost:8000/api/suggestions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(calendarData),
+  });
+  if (!response.ok) throw new Error('Failed to fetch suggestions');
+  const data = await response.json();
+  
+  // Parse suggestedEvents into LeaveEvent[] with Date objects and enhanced details
+  const events = (data.suggestedEvents || []).map((event: any, index: number) => {
+    const reportDetail = data.suggestions_report?.details?.[index];
+    return {
+      ...event,
+      startDate: new Date(event.startDate),
+      endDate: new Date(event.endDate),
+      type: EventType.SUGGESTED_LEAVE,
+      // Add detailed information from the suggestions report
+      suggestion_details_summary: event.suggestion_details_summary,
+      efficiency_report: reportDetail?.efficiency_report,
+      vacation_period: reportDetail?.vacation_period,
+      leave_days_count: reportDetail?.leave_days_count,
+      total_vacation_days: reportDetail?.total_vacation_days,
+      rank: reportDetail?.rank
+    };
+  });
+  
+  return { events, report: data.suggestions_report };
+}
+
 export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance>({
@@ -230,6 +262,27 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setLeaveBalance(recalculateLeaveBalance(events));
   }, [events]);
 
+  // Clear suggestions when leave balance changes (as it could invalidate existing suggestions)
+  useEffect(() => {
+    if (suggestedLeave.length > 0) {
+      clearSuggestions();
+    }
+  }, [leaveBalance]);
+
+  // Clear suggestions when leave style preferences change (as it could invalidate existing suggestions)
+  useEffect(() => {
+    if (suggestedLeave.length > 0) {
+      clearSuggestions();
+    }
+  }, [leaveStylePreferences]);
+
+  // Clear suggestions when off days change (as it could invalidate existing suggestions)
+  useEffect(() => {
+    if (suggestedLeave.length > 0) {
+      clearSuggestions();
+    }
+  }, [offDays]);
+
   // Hydrate from localStorage on mount
   useEffect(() => {
     try {
@@ -244,7 +297,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch (e) {
       setLocalStorageAvailable(false);
     }
-    // eslint-disable-next-line
+     
   }, []);
 
   // Ensure startDate and endDate are set to current year if null after hydration
@@ -320,40 +373,42 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       };
       setEvents([...events, newEvent]);
     }
+
+    // Clear suggestions after adding a new event
+    clearSuggestions();
   };
 
   const updateEvent = (id: string, updatedEvent: Partial<LeaveEvent>) => {
     setEvents(events.map(event => 
       event.id === id ? { ...event, ...updatedEvent } : event
     ));
+    
+    // Clear suggestions after updating an event
+    clearSuggestions();
   };
 
   const deleteEvent = (id: string) => {
     setEvents(events.filter(event => event.id !== id));
     // Leave balance will be recalculated by the useEffect
+
+    // Clear suggestions after deleting an event
+    clearSuggestions();
   };
 
-  const generateSuggestions = () => {
-    const suggestedEvents: LeaveEvent[] = [
-      {
-        id: 'suggestion-1',
-        title: 'Summer Vacation',
-        startDate: new Date(currentDate.getFullYear(), 6, 15),
-        endDate: new Date(currentDate.getFullYear(), 6, 25),
-        type: EventType.SUGGESTED_LEAVE,
-        description: 'Good time for vacation - low workload expected'
-      },
-      {
-        id: 'suggestion-2',
-        title: 'Winter Break',
-        startDate: new Date(currentDate.getFullYear(), 11, 20),
-        endDate: new Date(currentDate.getFullYear(), 11, 31),
-        type: EventType.SUGGESTED_LEAVE,
-        description: 'End of year break - office will be quiet'
-      }
-    ];
-    
-    setSuggestedLeave(suggestedEvents);
+  const generateSuggestions = async () => {
+    try {
+      const calendarData = exportCalendarData();
+      const { events: suggestions } = await fetchSuggestions(calendarData);
+      setSuggestedLeave(suggestions);
+    } catch (err) {
+      setSuggestedLeave([]);
+      // Optionally: set error state for UI
+      console.error('Failed to generate suggestions', err);
+    }
+  };
+
+  const clearSuggestions = () => {
+    setSuggestedLeave([]);
   };
 
   const setDateRange = (start: Date | null, end: Date | null) => {
@@ -380,6 +435,9 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     // Update the events state
     setEvents(remainingEvents);
+
+    // Clear suggestions after erasing events
+    clearSuggestions();
 
     return eventsToErase;
   };
@@ -436,6 +494,9 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setLeaveStylePreferences({ style });
       }
     }
+
+    // Clear suggestions after importing calendar data
+    clearSuggestions();
   };
 
   return (
@@ -455,6 +516,7 @@ export const LeaveProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setCurrentDate,
       suggestedLeave,
       generateSuggestions,
+      clearSuggestions,
       activeEventId,
       setActiveEventId,
       startDate,

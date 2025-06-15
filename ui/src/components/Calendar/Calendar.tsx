@@ -16,13 +16,27 @@ export const Calendar: React.FC<CalendarProps> = ({ offDays, selectedBrush, setS
     isCreatingEvent,
     activeEventId,
     startDate,
-    endDate
+    endDate,
+    events,
+    suggestedLeave
   } = useLeave();
+
+  // Merge events and suggestedLeave for rendering
+  const allEvents = [...events, ...suggestedLeave];
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-4">
-        <CalendarGrid currentDate={currentDate} view={calendarView} startDate={startDate} endDate={endDate} offDays={offDays} selectedBrush={selectedBrush} setSelectedBrush={setSelectedBrush} />
+        <CalendarGrid 
+          currentDate={currentDate} 
+          view={calendarView} 
+          startDate={startDate} 
+          endDate={endDate} 
+          offDays={offDays} 
+          selectedBrush={selectedBrush} 
+          setSelectedBrush={setSelectedBrush}
+          events={allEvents} // Pass merged events
+        />
       </div>
       
       {/* Event creation/edit modal */}

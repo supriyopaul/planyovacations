@@ -1,0 +1,119 @@
+{
+  "suggestions_report": {
+    "summary": "Generated 5 suggestions. Consider taking 5 leave day(s) based on these.",
+    "details": [
+      {
+        "rank": 1,
+        "reason": "General break.",
+        "leave_days_to_take": [
+          "2025-10-03"
+        ],
+        "leave_days_count": 1,
+        "vacation_period": {
+          "start": "2025-09-28",
+          "end": "2025-10-03"
+        },
+        "total_vacation_days": 6,
+        "efficiency_report": "6 days off for 1 leave day(s) (Score: 6.00)"
+      },
+      {
+        "rank": 2,
+        "reason": "General break.",
+        "leave_days_to_take": [
+          "2025-10-18"
+        ],
+        "leave_days_count": 1,
+        "vacation_period": {
+          "start": "2025-10-18",
+          "end": "2025-10-23"
+        },
+        "total_vacation_days": 6,
+        "efficiency_report": "6 days off for 1 leave day(s) (Score: 6.00)"
+      },
+      {
+        "rank": 3,
+        "reason": "General break.",
+        "leave_days_to_take": [
+          "2025-10-24"
+        ],
+        "leave_days_count": 1,
+        "vacation_period": {
+          "start": "2025-10-19",
+          "end": "2025-10-24"
+        },
+        "total_vacation_days": 6,
+        "efficiency_report": "6 days off for 1 leave day(s) (Score: 6.00)"
+      },
+      {
+        "rank": 4,
+        "reason": "General break.",
+        "leave_days_to_take": [
+          "2025-04-26"
+        ],
+        "leave_days_count": 1,
+        "vacation_period": {
+          "start": "2025-04-26",
+          "end": "2025-04-30"
+        },
+        "total_vacation_days": 5,
+        "efficiency_report": "5 days off for 1 leave day(s) (Score: 5.00)"
+      },
+      {
+        "rank": 5,
+        "reason": "General break.",
+        "leave_days_to_take": [
+          "2025-05-01"
+        ],
+        "leave_days_count": 1,
+        "vacation_period": {
+          "start": "2025-04-27",
+          "end": "2025-05-01"
+        },
+        "total_vacation_days": 5,
+        "efficiency_report": "5 days off for 1 leave day(s) (Score: 5.00)"
+      }
+    ]
+  },
+  "suggestedEvents": [
+    {
+      "title": "Suggested Leave (Rank 1)",
+      "type": "suggested_leave",
+      "startDate": "2025-10-03T00:00:00.000Z",
+      "endDate": "2025-10-03T00:00:00.000Z",
+      "id": "5dac3142-43cd-4fef-adf5-ccf755aa5100",
+      "suggestion_details_summary": "General break."
+    },
+    {
+      "title": "Suggested Leave (Rank 2)",
+      "type": "suggested_leave",
+      "startDate": "2025-10-18T00:00:00.000Z",
+      "endDate": "2025-10-18T00:00:00.000Z",
+      "id": "f140a5c0-384d-49f2-af8d-68ba62938421",
+      "suggestion_details_summary": "General break."
+    },
+    {
+      "title": "Suggested Leave (Rank 3)",
+      "type": "suggested_leave",
+      "startDate": "2025-10-24T00:00:00.000Z",
+      "endDate": "2025-10-24T00:00:00.000Z",
+      "id": "19cea652-a68f-4fb7-833e-c59d047fa3bc",
+      "suggestion_details_summary": "General break."
+    },
+    {
+      "title": "Suggested Leave (Rank 4)",
+      "type": "suggested_leave",
+      "startDate": "2025-04-26T00:00:00.000Z",
+      "endDate": "2025-04-26T00:00:00.000Z",
+      "id": "dbe7d96a-fa17-4abd-96bc-3ebe57bac1fc",
+      "suggestion_details_summary": "General break."
+    },
+    {
+      "title": "Suggested Leave (Rank 5)",
+      "type": "suggested_leave",
+      "startDate": "2025-05-01T00:00:00.000Z",
+      "endDate": "2025-05-01T00:00:00.000Z",
+      "id": "201a48a6-0183-495c-876c-2172e04159f7",
+      "suggestion_details_summary": "General break."
+    }
+  ]
+}

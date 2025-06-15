@@ -15,7 +15,7 @@ interface DragState {
 
 function getMonthsInRange(start: Date, end: Date) {
   const months = [];
-  let current = new Date(start.getFullYear(), start.getMonth(), 1);
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
   const last = new Date(end.getFullYear(), end.getMonth(), 1);
   while (current <= last) {
     months.push(new Date(current));
@@ -24,16 +24,18 @@ function getMonthsInRange(start: Date, end: Date) {
   return months;
 }
 
-export const CalendarGrid: React.FC<CalendarGridProps> = ({
+export const CalendarGrid: React.FC<CalendarGridProps & { events?: LeaveEvent[] }> = ({
   currentDate,
   view = 'year',
   startDate,
   endDate,
   offDays = [0, 6],
   selectedBrush,
-  setSelectedBrush
+  setSelectedBrush,
+  events: propEvents
 }) => {
-  const { events, addEvent, eraseEventsInRange } = useLeave();
+  const context = useLeave();
+  const events = propEvents || context.events;
   
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   
@@ -164,7 +166,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!eraserModalData) return;
 
     try {
-      eraseEventsInRange(eraserModalData.startDate, eraserModalData.endDate);
+      context.eraseEventsInRange(eraserModalData.startDate, eraserModalData.endDate);
       setDragState(prev => ({
         ...prev,
         isDragging: false,
@@ -177,7 +179,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
 
     setEraserModalData(null);
-  }, [eraserModalData, eraseEventsInRange]);
+  }, [eraserModalData, context.eraseEventsInRange]);
 
   const handleEraserCancel = useCallback(() => {
     setEraserModalData(null);
@@ -198,7 +200,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   const handleEventCreate = (data: { title: string; type: EventType; startDate: Date; endDate: Date }) => {
-    addEvent({
+    context.addEvent({
       title: data.title,
       type: data.type,
       startDate: data.startDate,
